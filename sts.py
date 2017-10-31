@@ -12,7 +12,7 @@ class DateTimeEncoder(json.JSONEncoder):
 def establish_role(acct):
     sts_connection = boto3.client('sts')
     acct_b = sts_connection.assume_role(
-        RoleArn="arn:aws:iam::{}:role/trulia_dataplatform_role_vpc_checker".format(acct['id']),
+        RoleArn="arn:aws:iam::{}:role/role_cidr_house".format(acct['id']),
         RoleSessionName="cross_acct_lambda"
     )
     d = json.dumps(acct_b, cls=DateTimeEncoder)
