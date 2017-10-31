@@ -1,0 +1,226 @@
+service: cidr-house-rules
+
+plugins:
+  - serverless-aws-documentation
+
+custom:
+  documentation:
+    info:
+      version: "1"
+      title: "cidr-house-rules"
+      description: "A lightweight API to expose important AWS resource information across multiple accounts in near-realtime
+"
+      termsOfService: ""
+      contact:
+        name: "Silver Mullet"
+        url: "https://github.com/silvermullet/cidr-house-rules/Readme.md"
+        email: ""
+
+provider:
+  name: aws
+  runtime: python3.6
+  region: us-west-2
+  apiKeys:
+    - my_api_key
+  timeout: 200
+  stackTags:
+    Product: cidr-house-rules
+    Owner: 
+    Team: dataplatform
+  environment:
+    DYNAMODB_TABLE_CIDRS: ${self:service}-${opt:stage, self:provider.stage}-cidrs
+    DYNAMODB_TABLE_ACCOUNTS: ${self:service}-${opt:stage, self:provider.stage}-accounts
+    DYNAMODB_TABLE_NAT_GATEWAYS: ${self:service}-${opt:stage, self:provider.stage}-nat-gateways
+    DYNAMODB_TABLE_EIP: ${self:service}-${opt:stage, self:provider.stage}-eip
+  iamRoleStatements:
+    - Effect: Allow
+      Action: sts:AssumeRole
+      Resource:
+        - "arn:aws:iam::<add_remote_account_number_here>:role/role_cidr_house"
+        - "arn:aws:iam::<add_another_remote_account_number_here>:role/role_cidr_house"
+        - "arn:aws:iam::<and_add_another_remote_account_number_here>:role/role_cidr_house"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_CIDRS}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_ACCOUNTS}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_NAT_GATEWAYS}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_EIP}"
+    - Effect: Allow
+      Action:
+        - ec2:Describe*
+      Resource:
+        - "*"
+
+functions:
+  import_cidrs:
+    handler: import_cidrs.import_cidrs
+    events:
+     - schedule: rate(1 hour)
+  import_nat_gateways:
+    handler: import_nat_gateways.import_nat_gateways
+    events:
+     - schedule: rate(1 hour)
+  import_eips:
+    handler: import_eips.import_eips
+    memorySize: 128
+    events:
+     - schedule: rate(1 hour)
+  clean_up_cidrs:
+    handler: cleanup_cidrs.clean_up_cidrs
+    events:
+     - schedule: rate(1 hour)
+  prune_tables:
+    handler: prune_tables.prune_tables
+    events:
+     - schedule: rate(1 hour)
+  check_conflict:
+    handler: api_handlers.check_conflict
+    events:
+      - http:
+          path: check_conflict
+          method: get
+          private: true
+          documentation:
+            summary: "Check input CIDR for conflicts with existing CIDRs"
+            description: "Check input CIDR for conflicts with existing CIDRs"
+            tags:
+              - "vpc"
+              - "networking"
+              - "ec2:Describe"
+            requestBody:
+              description: "Empty body"
+            requestHeaders:
+              -
+                name: "X-Api-Key"
+                description: "Requires an active API key for accessing this function"
+            queryParams:
+              -
+                name: "cidr"
+                description: "provide the cidr block to check for conflicts against, ie 10.16.0.0/16"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "*** Warning, Range overlaps with another in organization *** OR OK, no CIDR conflicts"
+  add_account:
+    handler: api_handlers.add_account
+    events:
+      - http:
+          path: add_account
+          method: get
+          private: true
+          documentation:
+            summary: "Add a new AWS Account to cidr-house-rules service"
+            description: "This will add a new account number and alias name to DynamoDB accounts table"
+            tags:
+              - "accounts"
+            requestBody:
+              description: "Empty body"
+            requestHeaders:
+              -
+                name: "X-Api-Key"
+                description: "Requires an active API key for accessing this function"
+            queryParams:
+              -
+                name: "account"
+                description: "provide the AWS account number"
+              -
+                name: "team"
+                description: "provide the AWS account alias name"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "OK"
+              -
+                statusCode: "422"
+                responseBody:
+                  description: "Invalid input"
+  get_nat_gateways_for_team:
+    handler: api_handlers.get_nat_gateways_for_team
+    events:
+      - http:
+          path: get_nat_gateways_for_team
+          method: get
+          private: true
+  get_eips_for_team:
+    handler: api_handlers.get_eips_for_team
+    events:
+      - http:
+          path: get_eips_for_team
+          method: get
+          private: true
+
+resources:
+  Resources:
+    CIDRDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 5
+        TableName: '${self:provider.environment.DYNAMODB_TABLE_CIDRS}'
+    AccountsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 5
+        TableName: '${self:provider.environment.DYNAMODB_TABLE_ACCOUNTS}'
+    NatGatewaysDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 5
+        TableName: '${self:provider.environment.DYNAMODB_TABLE_NAT_GATEWAYS}'
+    EIPDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 5
+        TableName: '${self:provider.environment.DYNAMODB_TABLE_EIP}'

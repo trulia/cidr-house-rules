@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "serverless-aws-documentation": "^0.8.0"
+  }
+}
