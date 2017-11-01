@@ -26,12 +26,10 @@ def check_conflict(event, context):
         }
 
     for cidr in cidrs:
-        if (
-            ipaddress.ip_network(input_cidr) in
-            ipaddress.ip_network(cidr['cidr']) or
-            ipaddress.ip_network(input_cidr) ==
-            ipaddress.ip_network(cidr['cidr'])
-            ):
+        compare_input_cidr = ipaddress.ip_network(input_cidr)
+        known_cidr = ipddress.ip_network(cidr['cidr'])
+
+        if compare_input_cidr.overlaps(known_cidr):
             return ({ "statusCode": 200, "body":
             '''*** Warning, CIDR overlaps with another with another AWS acct ***
             Account: {0}
