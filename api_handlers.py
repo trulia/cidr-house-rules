@@ -27,7 +27,7 @@ def check_conflict(event, context):
 
     for cidr in cidrs:
         compare_input_cidr = ipaddress.ip_network(input_cidr)
-        known_cidr = ipddress.ip_network(cidr['cidr'])
+        known_cidr = ipaddress.ip_network(cidr['cidr'])
 
         if compare_input_cidr.overlaps(known_cidr):
             return ({ "statusCode": 200, "body":
