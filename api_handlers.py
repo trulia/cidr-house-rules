@@ -8,9 +8,10 @@ from boto3.dynamodb.conditions import Key, Attr
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# In: plaintext IP address
-# Out: plaintext response
 def check_conflict(event, context):
+    """Take in a CIDR block and check for conflicts against all known blocks
+    to cidr-house-rules
+    """
     dynamodb = boto3.resource('dynamodb')
     cidr_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])
     input_cidr = event['queryStringParameters']['cidr']
@@ -24,26 +25,23 @@ def check_conflict(event, context):
             "body": 'Invalid CIDR input'
         }
 
-    match = False
     for cidr in cidrs:
-        if (
-            ipaddress.ip_network(input_cidr) in
-            ipaddress.ip_network(cidr['cidr']) or
-            ipaddress.ip_network(input_cidr) ==
-            ipaddress.ip_network(cidr['cidr'])
-            ):
-            match = True
-            break
-    if match == True:
-        return {
-            "statusCode": 200,
-            "body": '*** Warning, Range overlaps with another in organization ***'
-        }
+        compare_input_cidr = ipaddress.ip_network(input_cidr)
+        known_cidr = ipaddress.ip_network(cidr['cidr'])
+
+        if compare_input_cidr.overlaps(known_cidr):
+            return ({ "statusCode": 200, "body":
+            '''*** Warning, CIDR overlaps with another with another AWS acct ***
+            Account: {0}
+            Region: {1}
+            VpcId: {2}
+            CIDR: {3}
+            '''.format(
+            cidr['AccountID'], cidr['Region'], cidr['VpcId'],
+            cidr['cidr'])
+            })
     else:
-        return {
-            "statusCode": 200,
-            "body": 'OK, no CIDR conflicts'
-        }
+        return { "statusCode": 200, "body": 'OK, no CIDR conflicts' }
 
 def add_account(event, context):
     dynamodb = boto3.resource('dynamodb')
