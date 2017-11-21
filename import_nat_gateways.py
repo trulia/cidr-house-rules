@@ -46,6 +46,7 @@ def import_nat_gateways(event, context):
                         'PublicIp': public_ip,
                         'AccountID': acct_id,
                         'VpcId': nat_vpc_id,
+                        'Region': region
                     },
                     ConditionExpression='attribute_not_exists(nat_id)'
                 )

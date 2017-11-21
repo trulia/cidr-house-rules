@@ -30,10 +30,11 @@ def import_cidrs(event, context):
             vpcs = client.describe_vpcs()
 
             for vpc in vpcs['Vpcs']:
-                unique_id = acct['id'] + vpc['CidrBlock'] + region
+                acct_id = acct['id']
                 vpc_cidr = vpc['CidrBlock']
                 vpc_id = vpc['VpcId']
-                acct_id = acct['id']
+                unique_id = "{0}{1}{2}{3}".format(
+                    acct_id, vpc_cidr, region, vpc_id)
 
                 logger.info(
                 "Found vpc-id: {0} and cidr: {1} ({2}) from "
@@ -56,15 +57,24 @@ def import_cidrs(event, context):
 
                 if 'CidrBlockAssociationSet' in vpc:
                     for cidr_associaton in vpc['CidrBlockAssociationSet']:
-                        unique_id = acct['id'] + cidr_associaton['CidrBlock'] + region
-                        response = cidr_table.put_item(
-                            Item={
-                                'id': unique_id,
-                                'cidr': cidr_associaton['CidrBlock'],
-                                'AccountID': acct_id,
-                                'Region': region,
-                                'VpcId': vpc_id,
-                            },
-                            ConditionExpression='attribute_not_exists(unique_id)'
-                        )
-                        logger.info("Dynamodb response: {}".format(response))
+                        cidr_state = cidr_associaton['CidrBlockState']['State']
+                        if cidr_state == "associated":
+                            unique_id = ("{0}{1}{2}{3}".format(
+                                acct_id,
+                                cidr_associaton['CidrBlock'],
+                                region, vpc_id))
+                            response = cidr_table.put_item(
+                                Item={
+                                    'id': unique_id,
+                                    'cidr': cidr_associaton['CidrBlock'],
+                                    'AccountID': acct_id,
+                                    'Region': region,
+                                    'VpcId': vpc_id,
+                                },
+                                ConditionExpression=(
+                                    'attribute_not_exists(unique_id)')
+                            )
+                            logger.info("Dynamodb response: {}".format(response))
+                        else:
+                            logger.info("CIDR: {} not associated".format(
+                                cidr_associaton['CidrBlock']))

@@ -15,33 +15,37 @@ def prune_tables(event, context):
     recorded_nats = {}
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
-    nat_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
-    cidr_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])
+    nats_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
+    cidrs_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])
     eips_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_EIP'])
     accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
     accounts = accounts_table.scan()['Items']
-    cidrs = cidr_table.scan()['Items']
-    nats = client.describe_nat_gateways()
-    vpcs = client.describe_vpcs()
-    eips = client.describe_addresses()
-    response = cidr_table.scan(
+    cidrs = cidrs_table.scan()['Items']
+    scan_cidrs_table = cidrs_table.scan(
         AttributesToGet=['id','AccountID','Region','VpcId','cidr'])['Items']
-    scan_nats_table = nat_table.scan(
-        AttributesToGet=['id','AccountID','PublicIp','VpcId'])['Items']
+    scan_nats_table = nats_table.scan(
+        AttributesToGet=['id','AccountID','PublicIp','VpcId','Region'])['Items']
     scan_eips_table = eips_table.scan(
         AttributesToGet=['id','AccountID','Region'])['Items']
 
-    for i in response:
-        id = i['VpcId']
-        recorded_cidrs[id] = [i['id'],i['cidr'], i['Region'], i['AccountID']]
+    for i in scan_cidrs_table:
+        cidr_id = i['id']
+        recorded_cidrs[cidr_id] = [i['VpcId'], i['cidr'], i['Region'], i['AccountID']]
+        logger.info("CIDRS Found: Account: {0} Region: {1} Cidr: {2}".format(
+        i['AccountID'], i['Region'], i['cidr']))
 
     for j in scan_nats_table:
         nats_id = j['id']
-        recorded_nats[nats_id] = [j['AccountID'], j['PublicIp'], j['VpcId']]
+        recorded_nats[nats_id] = [j['AccountID'], j['PublicIp'], j['VpcId'],
+                                  j['Region']]
+        logger.info("Nat Found: Account: {0} PublicIp: {1} VpcId: {2}".format(
+        j['AccountID'], j['PublicIp'], j['VpcId']))
 
-    for j in scan_eips_table:
-        eips_id = j['id']
-        recorded_eips[eips_id] = [j['AccountID'], j['Region']]
+    for e in scan_eips_table:
+        eips_id = e['id']
+        recorded_eips[eips_id] = [e['AccountID'], e['Region']]
+        logger.info("EIP Found: Account: {0} PublicIp: {1} Region: {2}".format(
+        e['AccountID'], e['id'], e['Region']))
 
     regions = ([region['RegionName'] for region in
                 client.describe_regions()['Regions']])
@@ -55,66 +59,60 @@ def prune_tables(event, context):
             aws_session_token=SESSION_TOKEN,
             region_name=region
             )
-            cidr_removals = []
-            nat_removals = []
-            eip_removals = []
-            active_cidrs = {}
-            active_nats = {}
-            active_eips = {}
+            nats = client.describe_nat_gateways()
+            vpcs = client.describe_vpcs()
+            eips = client.describe_addresses()
+            active_cidrs = (["{0}{1}{2}{3}".format(
+                acct['id'], vpc['CidrBlock'], region, vpc['VpcId'])
+                             for vpc in vpcs['Vpcs']])
+            active_cidr_associations = (["{0}{1}{2}{3}".format(
+                acct['id'], cidr_associaton['CidrBlock'], region, vpc['VpcId'])
+                             for vpc in vpcs['Vpcs']
+                             for cidr_associaton in vpc['CidrBlockAssociationSet']
+                             if 'CidrBlockAssociationSet' in vpc
+                             and cidr_associaton['CidrBlockState']['State']
+                             == "associated"])
+            active_nats = (["{0}".format(nat['NatGatewayId'])
+                            for nat in nats['NatGateways']])
+            active_eips = (["{0}".format(eip['PublicIp'])
+                            for eip in eips['Addresses']
+                            ])
             cidrs_keys_list = ([k for k, v in recorded_cidrs.items()
-                               if (v[3] == acct and v[2] == region)])
+                                if (v[3] == str(acct['id'])
+                                    and v[2] == str(region))])
             nats_keys_list = ([k for k, v in recorded_nats.items()
-                              if (v[0] == acct)])
+                              if (v[0] == str(acct['id'])
+                                  and v[3] == str(region))])
             eips_keys_list = ([k for k, v in recorded_eips.items()
-                              if (v[0] == acct)])
+                              if (v[0] == str(acct['id'])
+                                  and v[1] == str(region))])
 
-            for vpc in vpcs['Vpcs']:
-                id = vpc['VpcId']
-                active_cidrs[id] = [vpc['CidrBlock'], region, acct]
+            logger.info("Current active_cidrs: {}".format(active_cidrs))
+            logger.info("Current active_cidr_associations: {}".format(
+                active_cidr_associations))
+            logger.info("Current recorded cidrs: {}".format(cidrs_keys_list))
+            logger.info("Current active_nats: {}".format(active_nats))
+            logger.info("Current recorded nats: {}".format(nats_keys_list))
+            logger.info("Current active_eips: {}".format(active_eips))
+            logger.info("Current recorded eips: {}".format(eips_keys_list))
 
-            for nat in nats['NatGateways']:
-                public_ip = nat['NatGatewayAddresses'][0]['PublicIp']
-                nat_id = nat['NatGatewayId']
-                nat_vpc_id = nat['VpcId']
-                active_nats[nat_id] = [nat_id, public_ip, region, acct]
+            all_cidrs = set(list(active_cidrs + active_cidr_associations))
+            cidrs_to_prune = list(set(cidrs_keys_list) - set(all_cidrs))
+            nats_to_prune = list(set(nats_keys_list) - set(active_nats))
+            eips_to_prune = list(set(eips_keys_list) - set(active_eips))
 
-            for eip in eips['Addresses']:
-                acct_id = acct['id']
-                eip_address = eip['PublicIp']
-                if 'AssociationId' in eip:
-                    eip_association_id = eip['AssociationId']
-                else:
-                    eip_association_id = "none"
-                if 'AllocationId' in eip:
-                    eip_id = eip['AllocationId']
-                else:
-                    eip_id = "none"
-                    active_eips[eip_address] = (
-                        [eip_id, eip_association_id, region, acct])
+            logger.info("cidrs_to_prune: {}".format(cidrs_to_prune))
+            logger.info("nats_to_prune: {}".format(nats_to_prune))
+            logger.info("eips_to_prune: {}".format(eips_to_prune))
 
-                cidr_keys = list(active_cidrs)
-                nats_keys = list(active_cidrs)
-                eips_keys = list(active_eips)
+            for cidr in cidrs_to_prune:
+                logger.info("Found unused cidr: {} - removing".format(cidr))
+                cidrs_table.delete_item(Key={'id': cidr})
 
-                cidr_removals = (
-                    [x for x in cidrs_keys_list if x not in cidr_keys])
-                nat_removals = [x for x in nats_keys_list if x not in nats_keys]
-                eip_removals = [x for x in eips_keys_list if x not in eips_keys]
+            for nat in nats_to_prune:
+                logger.info("Found unused nat: {} - removing".format(nat))
+                nats_table.delete_item(Key={'id': nat})
 
-            for r in nat_removals:
-                id = r
-                logger.info("Removing \"{0}\" NAT from {1}".format(
-                    id, os.environ['DYNAMODB_TABLE_NAT_GATEWAYS']))
-                nat_table.delete_item(Key={'id': id})
-
-            for r in cidr_removals:
-                id = recorded_cidrs[r][0]
-                logger.info("Removing \"{0}\" CIDR block from {1}".format(
-                    id, os.environ['DYNAMODB_TABLE_CIDRS']))
-                cidr_table.delete_item(Key={'id': id})
-
-            for r in eip_removals:
-                id = r
-                logger.infor("Removing \"{0}\" EIP from {1}".format(
-                    id, os.environ['DYNAMODB_TABLE_EIP']))
-                eips_table.delete_item(Key={'id': id})
+            for eip in eips_to_prune:
+                logger.info("Found unused eip: {} - removing".format(eip))
+                eips_table.delete_item(Key={'id': eip})
