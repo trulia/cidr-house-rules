@@ -89,7 +89,8 @@ iamRoleStatements:
 
 ```
 curl \
-  --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \ https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=platform
+  --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
+   https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=platform
 ```
 
 ##### Check for a VPC CIDR conflict
