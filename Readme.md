@@ -10,7 +10,7 @@ Centralized AWS Lambda functions assume role on monitored AWS accounts to gather
 
 * collect NAT Gateway IPs with associated VPCs and environment tags
 * collect all EIPs in use
-* VPC cidr blocks (including associated CIDR blocks)
+* VPC CIDR blocks (including associated CIDR blocks)
 
 #### API interface
 
@@ -18,7 +18,7 @@ An API interface is provided to expose collected data for consumption. Example u
 
 * retrieve all NAT Gateways for a given AWS account (team)
 * retrieve all EIPs for a given AWS account (team)
-* lookup a given cidr block, i.e. 10.0.16.0/16 for potential VPC peering conflicts
+* lookup a given CIDR block, i.e. 10.0.16.0/16 for potential VPC peering conflicts
 
 #### Terraform modules that use cidr-house-rules for dynamic data
 
@@ -92,7 +92,7 @@ curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \ https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=my_aws_account_alias_here
 ```
 
-##### Check for a VPC CIDR conflict 
+##### Check for a VPC CIDR conflict
 
 ```
 curl \
@@ -110,5 +110,4 @@ curl \
 
 #####  Supporting Terraform
 
-[cird-house-rules-role](https://github.com/trulia/cidr-house-rules-role) - use this Terraform on your accounts you would like your cidr-house-rules deploymen to have access to. The ouputs on this Terraform can then be used in your serverless.yml. The account number of the remote account can then be added with the `add_account` api endpoint.
-
+[cird-house-rules-role](https://github.com/trulia/cidr-house-rules-role) - use this Terraform on your accounts you would like your cidr-house-rules deployment to have access to. The outputs on this Terraform can then be used in your serverless.yml. The account number of the remote account can then be added with the `add_account` api endpoint.
