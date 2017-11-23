@@ -69,7 +69,7 @@ curl \
   https://yourapigateway-endpoint-generated-by-serverless.com/prod/add_account?team=trucomms?account=35682931234
 ```
 
-3. A the role for Lambda functions to use in serverless.yml
+3. Add the role for Lambda functions to use in serverless.yml
 
 ```
 Under this section add the new role, there should be a list of them already
@@ -85,11 +85,11 @@ iamRoleStatements:
 
 #### Example API calls
 
-##### Obtain NAT gateways for trucomms team
+##### Obtain NAT gateways for platform team
 
 ```
 curl \
-  --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \ https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=my_aws_account_alias_here
+  --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \ https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=platform
 ```
 
 ##### Check for a VPC CIDR conflict
