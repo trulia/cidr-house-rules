@@ -63,7 +63,7 @@ output "cidr-house-rules-role" {
 
 2. With the account_alias, account_id to app
 
-```
+```bash
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
   https://yourapigateway-endpoint-generated-by-serverless.com/prod/add_account?team=trucomms?account=35682931234
@@ -87,7 +87,7 @@ iamRoleStatements:
 
 ##### Obtain NAT gateways for platform team
 
-```
+```bash
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
    https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=platform
@@ -95,7 +95,7 @@ curl \
 
 ##### Check for a VPC CIDR conflict
 
-```
+```bash
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
   https://yourapigateway-endpoint-generated-by-serverless.com/dev/check_conflict?cidr=10.17.0.0/16
@@ -103,7 +103,7 @@ curl \
 
 ##### Add a new account
 
-```
+```bash
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
   https://yourapigateway-endpoint-generated-by-serverless.com/dev/add_account?team=my_aws_account_alias_here?account=35682931234
