@@ -6,11 +6,11 @@ A lightweight API and collection system to expose important AWS resource informa
 
 #### Collection subsystem
 
-Centralized AWS Lambda functions assume role on monitored AWS accounts to gather the following:
+Centralized AWS Lambda functions assume role on monitored AWS accounts to collect the following:
 
-* collect NAT Gateway IPs with associated VPCs and environment tags
-* collect all EIPs in use
-* VPC CIDR blocks (including associated CIDR blocks)
+* [NAT Gateway IPs](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-nat-gateway.html) with associated VPCs and environment tags
+* [EIPs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html)
+* [VPC CIDR blocks](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/working-with-vpcs.html) (including associated CIDR blocks)
 
 #### API interface
 
