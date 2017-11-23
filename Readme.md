@@ -110,4 +110,4 @@ curl \
 
 #####  Supporting Terraform
 
-[cird-house-rules-role](https://github.com/trulia/cidr-house-rules-role) - use this Terraform on your accounts you would like your cidr-house-rules deployment to have access to. The outputs on this Terraform can then be used in your serverless.yml. The account number of the remote account can then be added using the `add_account` api endpoint.
+[cird-house-rules-role](https://github.com/trulia/cidr-house-rules-role) - use this Terraform on your accounts you would like your cidr-house-rules deployment to have access to. The outputs on this Terraform can then be used in your serverless.yml. The account number of the remote account can then be added using the `add_account` API endpoint.
