@@ -1,4 +1,5 @@
 # cidr-house-rules
+[![Build Status](https://travis-ci.org/trulia/cidr-house-rules.svg)](https://travis-ci.org/trulia/cidr-house-rules)
 
 A lightweight API and collection system to centralize important AWS resource information across multiple accounts in near-realtime
 
