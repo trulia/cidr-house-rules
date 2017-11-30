@@ -20,8 +20,8 @@ class TestAvailableIps(unittest.TestCase):
 
         os.environ["DYNAMODB_TABLE_AVAILABLE_IPS"] = "cidr-house-rules-test-available-ips"
         os.environ['DYNAMODB_TABLE_ACCOUNTS'] = "cidr-house-rules-test-accounts"
-        self.client = boto3.client('ec2', region_name='us-west-1')
-        self.dynamodb = boto3.resource('dynamodb')
+        self.client = boto3.client('ec2', region_name='us-east-1')
+        self.dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         self.dynamodb.create_table(
             AttributeDefinitions=[
                 {
