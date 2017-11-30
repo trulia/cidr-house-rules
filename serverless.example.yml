@@ -25,13 +25,14 @@ provider:
   timeout: 200
   stackTags:
     Product: cidr-house-rules
-    Owner: 
+    Owner:
     Team: dataplatform
   environment:
     DYNAMODB_TABLE_CIDRS: ${self:service}-${opt:stage, self:provider.stage}-cidrs
     DYNAMODB_TABLE_ACCOUNTS: ${self:service}-${opt:stage, self:provider.stage}-accounts
     DYNAMODB_TABLE_NAT_GATEWAYS: ${self:service}-${opt:stage, self:provider.stage}-nat-gateways
     DYNAMODB_TABLE_EIP: ${self:service}-${opt:stage, self:provider.stage}-eip
+    DYNAMODB_TABLE_AVAILABLE_IPS: ${self:service}-${opt:stage, self:provider.stage}-available-ips
   iamRoleStatements:
     - Effect: Allow
       Action: sts:AssumeRole
@@ -52,6 +53,7 @@ provider:
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_ACCOUNTS}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_NAT_GATEWAYS}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_EIP}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_AVAILABLE_IPS}"
     - Effect: Allow
       Action:
         - ec2:Describe*
@@ -72,12 +74,14 @@ functions:
     memorySize: 128
     events:
      - schedule: rate(1 hour)
-  clean_up_cidrs:
-    handler: cleanup_cidrs.clean_up_cidrs
+  available_ips:
+    handler: available_ips.available_ips
+    memorySize: 128
     events:
-     - schedule: rate(1 hour)
+     - schedule: rate(30 minutes)
   prune_tables:
     handler: prune_tables.prune_tables
+    memorySize: 128
     events:
      - schedule: rate(1 hour)
   check_conflict:
@@ -224,3 +228,19 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 5
         TableName: '${self:provider.environment.DYNAMODB_TABLE_EIP}'
+    AvailableIPsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 5
+        TableName: '${self:provider.environment.DYNAMODB_TABLE_AVAILABLE_IPS}'

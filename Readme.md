@@ -11,6 +11,7 @@ Centralized AWS Lambda functions assume role on monitored AWS accounts to collec
 * [NAT Gateway IPs](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-nat-gateway.html) with associated VPCs and environment tags
 * [EIPs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html)
 * [VPC CIDR blocks](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/working-with-vpcs.html) (including associated CIDR blocks)
+* Available IPv4 Addresses per subnet (Note that the IPv4 addresses for any stopped instances are considered unavailable)
 
 #### API interface
 
