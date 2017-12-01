@@ -3,7 +3,7 @@
 
 A lightweight API and collection system to centralize important AWS resource information across multiple accounts in near-realtime
 
-![cidr-house-rules - page 1](https://user-images.githubusercontent.com/538171/33156099-3b810b1a-cfab-11e7-9005-79c0ee7bf506.png)
+![cidr-house-rules](https://user-images.githubusercontent.com/538171/33504603-eb6a71d6-d69c-11e7-9a54-5f2d8ad95f8a.png)
 
 #### Collection subsystem
 
