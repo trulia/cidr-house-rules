@@ -2,6 +2,7 @@ import boto3
 import logging
 import os
 import sys
+import time
 sys.path.insert(0, './vendor')
 from sts import establish_role
 from boto3.dynamodb.conditions import Key, Attr
@@ -42,6 +43,8 @@ def available_ips(event, context):
                     subnet_id = subnet['SubnetId']
                     subnet = subnet['CidrBlock']
                     unique_id = f'{acct_id}{vpc_id}{subnet_id}{subnet}'
+                    # ttl set to 48 hours
+                    ttl_expire_time = int(time.time()) + 172800
 
                     response = available_ips_table.put_item(
                         Item={
@@ -51,7 +54,8 @@ def available_ips(event, context):
                             'SubnetId': subnet_id,
                             'Subnet': subnet,
                             'Region': region,
-                            'AvailableIpAddressCount': available_ips
+                            'AvailableIpAddressCount': available_ips,
+                            'ttl': ttl_expire_time
                         }
                     )
                     logger.info("Dynamodb response: {}".format(response))
