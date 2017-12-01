@@ -52,7 +52,6 @@ def available_ips(event, context):
                             'Subnet': subnet,
                             'Region': region,
                             'AvailableIpAddressCount': available_ips
-                        },
-                        ConditionExpression='attribute_not_exists(unique_id)'
+                        }
                     )
                     logger.info("Dynamodb response: {}".format(response))
