@@ -151,9 +151,6 @@ def get_eips_for_team(event, context):
             if e['AccountID'] == account_id:
                 response.append(e['PublicIp'] + '/32')
 
-        #TODO error out if response is empty
-        print(response)
-
         return {
                 "statusCode": 200,
                 "body": str(json.dumps(response))
