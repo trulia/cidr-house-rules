@@ -32,6 +32,7 @@ provider:
     DYNAMODB_TABLE_ACCOUNTS: ${self:service}-${opt:stage, self:provider.stage}-accounts
     DYNAMODB_TABLE_NAT_GATEWAYS: ${self:service}-${opt:stage, self:provider.stage}-nat-gateways
     DYNAMODB_TABLE_EIP: ${self:service}-${opt:stage, self:provider.stage}-eip
+    DYNAMODB_TABLE_ELB: ${self:service}-${opt:stage, self:provider.stage}-elb
     DYNAMODB_TABLE_AVAILABLE_IPS: ${self:service}-${opt:stage, self:provider.stage}-available-ips
   iamRoleStatements:
     - Effect: Allow
@@ -71,6 +72,11 @@ functions:
      - schedule: rate(1 hour)
   import_eips:
     handler: import_eips.import_eips
+    memorySize: 128
+    events:
+     - schedule: rate(1 hour)
+  import_elbs:
+    handler: import_elbs.import_elbs
     memorySize: 128
     events:
      - schedule: rate(1 hour)
@@ -228,6 +234,22 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 5
         TableName: '${self:provider.environment.DYNAMODB_TABLE_EIP}'
+    ELBDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 5
+        TableName: '${self:provider.environment.DYNAMODB_TABLE_ELB}'
     AvailableIPsDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Delete
