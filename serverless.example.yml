@@ -167,6 +167,13 @@ functions:
           path: get_eips_for_team
           method: get
           private: true
+  get_elbs_for_all:
+    handler: api_handlers.get_elbs_for_all
+    events:
+      - http:
+          path: get_elbs_for_all
+          method: get
+          private: true
 
 resources:
   Resources:
