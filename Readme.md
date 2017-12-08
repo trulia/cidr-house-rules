@@ -12,6 +12,8 @@ Centralized AWS Lambda functions assume role on monitored AWS accounts to collec
 * [NAT Gateway IPs](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-nat-gateway.html) with associated VPCs and environment tags
 * [EIPs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html)
 * [VPC CIDR blocks](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/working-with-vpcs.html) (including associated CIDR blocks)
+* [Classic ELBs](http://docs.aws.amazon.com/elasticloadbalancing/latest/classic/introduction.html)
+* [ALBs, NLBs (elbv2)](https://aws.amazon.com/documentation/elastic-load-balancing/)
 * Available IPv4 Addresses per subnet (Note that the IPv4 addresses for any stopped instances are considered unavailable)
 
 #### API interface
@@ -101,6 +103,13 @@ curl \
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
   https://yourapigateway-endpoint-generated-by-serverless.com/dev/check_conflict?cidr=10.17.0.0/16
+```
+
+##### Obtain all ELBs, ALBs, NLBs across all accounts
+
+```bash
+curl \
+--header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \ https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_elbs_for_all
 ```
 
 ##### Add a new account

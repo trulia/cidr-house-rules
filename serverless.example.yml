@@ -22,7 +22,7 @@ provider:
   region: us-west-2
   apiKeys:
     - my_api_key
-  timeout: 200
+  timeout: 300
   stackTags:
     Product: cidr-house-rules
     Owner:
@@ -32,6 +32,7 @@ provider:
     DYNAMODB_TABLE_ACCOUNTS: ${self:service}-${opt:stage, self:provider.stage}-accounts
     DYNAMODB_TABLE_NAT_GATEWAYS: ${self:service}-${opt:stage, self:provider.stage}-nat-gateways
     DYNAMODB_TABLE_EIP: ${self:service}-${opt:stage, self:provider.stage}-eip
+    DYNAMODB_TABLE_ELB: ${self:service}-${opt:stage, self:provider.stage}-elb
     DYNAMODB_TABLE_AVAILABLE_IPS: ${self:service}-${opt:stage, self:provider.stage}-available-ips
   iamRoleStatements:
     - Effect: Allow
@@ -53,6 +54,7 @@ provider:
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_ACCOUNTS}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_NAT_GATEWAYS}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_EIP}"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_ELB}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_AVAILABLE_IPS}"
     - Effect: Allow
       Action:
@@ -71,6 +73,16 @@ functions:
      - schedule: rate(1 hour)
   import_eips:
     handler: import_eips.import_eips
+    memorySize: 128
+    events:
+     - schedule: rate(1 hour)
+  import_elbs_classic:
+    handler: import_elbs_classic.import_elbs
+    memorySize: 128
+    events:
+     - schedule: rate(1 hour)
+  import_elbsv2:
+    handler: import_elbsv2.import_elbs
     memorySize: 128
     events:
      - schedule: rate(1 hour)
@@ -161,6 +173,13 @@ functions:
           path: get_eips_for_team
           method: get
           private: true
+  get_elbs_for_all:
+    handler: api_handlers.get_elbs_for_all
+    events:
+      - http:
+          path: get_elbs_for_all
+          method: get
+          private: true
 
 resources:
   Resources:
@@ -228,6 +247,22 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 5
         TableName: '${self:provider.environment.DYNAMODB_TABLE_EIP}'
+    ELBDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 5
+        TableName: '${self:provider.environment.DYNAMODB_TABLE_ELB}'
     AvailableIPsDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Delete

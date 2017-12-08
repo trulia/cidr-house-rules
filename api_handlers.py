@@ -112,6 +112,27 @@ def get_nat_gateways_for_team(event, context):
             "body": 'Invalid input'
         }
 
+def get_elbs_for_all(event, context):
+    dynamodb = boto3.resource('dynamodb')
+    elbs_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ELB'])
+
+    try:
+        response = []
+        elbs = elbs_table.scan()
+        for elb in elbs['Items']:
+            response.append(elb['id'])
+
+        return {
+            "statusCode": 200,
+            "body": str(json.dumps(response))
+        }
+    except ValueError:
+        return {
+            "statusCode": 404,
+            "body": 'Unable to scan elbs table'
+        }
+
+
 def get_eips_for_team(event, context):
     dynamodb = boto3.resource('dynamodb')
     accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
@@ -129,9 +150,6 @@ def get_eips_for_team(event, context):
         for e in eips['Items']:
             if e['AccountID'] == account_id:
                 response.append(e['PublicIp'] + '/32')
-
-        #TODO error out if response is empty
-        print(response)
 
         return {
                 "statusCode": 200,
