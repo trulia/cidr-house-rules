@@ -76,8 +76,13 @@ functions:
     memorySize: 128
     events:
      - schedule: rate(1 hour)
-  import_elbs:
-    handler: import_elbs.import_elbs
+  import_elbs_classic:
+    handler: import_elbs_classic.import_elbs
+    memorySize: 128
+    events:
+     - schedule: rate(1 hour)
+  import_elbsv2:
+    handler: import_elbsv2.import_elbs
     memorySize: 128
     events:
      - schedule: rate(1 hour)

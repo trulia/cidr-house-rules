@@ -12,7 +12,7 @@ logger.setLevel(logging.INFO)
 
 def classic_elb_importer(classic_elbs, acct_id, region, ttl_expire_time):
     for elb in classic_elbs['LoadBalancerDescriptions']:
-        elb_dns_name = elb['DNSname']
+        elb_dns_name = elb['DNSName']
         elb_name = elb['LoadBalancerName']
         logger.info(
             'Discovered Classic ELB in use: {0} with DNS: {1}'
@@ -28,29 +28,8 @@ def classic_elb_importer(classic_elbs, acct_id, region, ttl_expire_time):
         )
         logger.info("Dynamodb response: {}".format(response))
 
-def elbv2_importer(elbv2, acct_id, region, ttl_expire_time):
-    for elb in elbv2['LoadBalancers']:
-        elb_dns_name = elb['DNSname']
-        elb_name = ""
-        elb_arn = elb['LoadBalancerArn']
-        logger.info(
-            'Discovered ELBv2 in use: {0} with DNS: {1}'
-            .format(elb_arn, elb_dns_name))
-        response = elb_table.put_item(
-            Item={
-                'id': elb_dns_name,
-                'LoadBalancerName': elb_name,
-                'LoadBalancerArn': elb_arn,
-                'AccountID': acct_id,
-                'Region': region,
-                'ttl': ttl_expire_time
-            }
-        )
-        logger.info("Dynamodb response: {}".format(response))
-
-
 def import_elbs(event, context):
-    """Import AWS ELB, ALB, NLB resources
+    """Import AWS ELB resource
     """
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
@@ -69,14 +48,7 @@ def import_elbs(event, context):
                                               aws_session_token=SESSION_TOKEN,
                                               region_name=region
                                               )
-            elbv2_client = boto3.client('elbv2',
-                                        aws_access_key_id=ACCESS_KEY,
-                                        aws_secret_access_key=SECRET_KEY,
-                                        aws_session_token=SESSION_TOKEN,
-                                        region_name=region
-                                        )
             classic_elbs = classic_elb_client.describe_load_balancers()
-            elbsv2 = elbv2_client.describe_load_balancers()
             # ttl set to 48 hours
             ttl_expire_time = int(time.time()) + 172800
 
@@ -86,10 +58,3 @@ def import_elbs(event, context):
             else:
                 classic_elb_importer(
                     classic_elbs, acct_id, region, ttl_expire_time)
-
-            if not elbsv2['LoadBalancers']:
-                logger.info("No ELBv2s allocated for acct: {0} in region {1}"
-                            .format(acct['id'], region))
-            else:
-                elbv2_importer(
-                    elbsv2, acct_id, region, ttl_expire_time)
