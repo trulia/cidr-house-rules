@@ -105,6 +105,13 @@ curl \
   https://yourapigateway-endpoint-generated-by-serverless.com/dev/check_conflict?cidr=10.17.0.0/16
 ```
 
+##### Obtain all ELBs, ALBs, NLBs across all accounts
+
+```bash
+curl \
+--header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \ https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_elbs_for_all
+```
+
 ##### Add a new account
 
 ```bash
