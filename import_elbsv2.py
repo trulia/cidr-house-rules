@@ -13,7 +13,7 @@ logger.setLevel(logging.INFO)
 def elbv2_importer(elbv2, table, acct_id, region, ttl_expire_time):
     for elb in elbv2['LoadBalancers']:
         elb_dns_name = elb['DNSName']
-        elb_name = ""
+        elb_name = "NA"
         elb_arn = elb['LoadBalancerArn']
         logger.info(
             'Discovered ELBv2 in use: {0} with DNS: {1}'
