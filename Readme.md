@@ -109,7 +109,8 @@ curl \
 
 ```bash
 curl \
---header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \ https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_elbs_for_all
+--header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
+https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_elbs_for_all
 ```
 
 ##### Add a new account
