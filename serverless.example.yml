@@ -22,7 +22,7 @@ provider:
   region: us-west-2
   apiKeys:
     - my_api_key
-  timeout: 400
+  timeout: 300
   stackTags:
     Product: cidr-house-rules
     Owner:
