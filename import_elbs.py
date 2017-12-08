@@ -3,6 +3,7 @@ import sys
 sys.path.insert(0, './vendor')
 import boto3
 import logging
+import time
 from sts import establish_role
 from boto3.dynamodb.conditions import Key, Attr
 
