@@ -120,7 +120,7 @@ def get_elbs_for_all(event, context):
         response = []
         elbs = elbs_table.scan()
         for elb in elbs['Items']:
-            response.append(elb['DNSname'])
+            response.append(elb['DNSName'])
 
         return {
             "statusCode": 200,
