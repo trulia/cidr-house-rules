@@ -10,14 +10,14 @@ from boto3.dynamodb.conditions import Key, Attr
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-def classic_elb_importer(classic_elbs, acct_id, region, ttl_expire_time):
+def classic_elb_importer(classic_elbs, table, acct_id, region, ttl_expire_time):
     for elb in classic_elbs['LoadBalancerDescriptions']:
         elb_dns_name = elb['DNSName']
         elb_name = elb['LoadBalancerName']
         logger.info(
             'Discovered Classic ELB in use: {0} with DNS: {1}'
             .format(elb_name, elb_dns_name))
-        response = elb_table.put_item(
+        response = table.put_item(
             Item={
                 'id': elb_dns_name,
                 'LoadBalancerName': elb_name,
@@ -57,4 +57,4 @@ def import_elbs(event, context):
                             .format(acct['id'], region))
             else:
                 classic_elb_importer(
-                    classic_elbs, acct_id, region, ttl_expire_time)
+                    classic_elbs, elb_table, acct_id, region, ttl_expire_time)

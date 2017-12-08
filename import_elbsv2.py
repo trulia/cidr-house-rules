@@ -10,7 +10,7 @@ from boto3.dynamodb.conditions import Key, Attr
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-def elbv2_importer(elbv2, acct_id, region, ttl_expire_time):
+def elbv2_importer(elbv2, table, acct_id, region, ttl_expire_time):
     for elb in elbv2['LoadBalancers']:
         elb_dns_name = elb['DNSName']
         elb_name = ""
@@ -18,7 +18,7 @@ def elbv2_importer(elbv2, acct_id, region, ttl_expire_time):
         logger.info(
             'Discovered ELBv2 in use: {0} with DNS: {1}'
             .format(elb_arn, elb_dns_name))
-        response = elb_table.put_item(
+        response = table.put_item(
             Item={
                 'id': elb_dns_name,
                 'LoadBalancerName': elb_name,
@@ -60,4 +60,4 @@ def import_elbs(event, context):
                             .format(acct['id'], region))
             else:
                 elbv2_importer(
-                    elbsv2, acct_id, region, ttl_expire_time)
+                    elbsv2, elb_table, acct_id, region, ttl_expire_time)
