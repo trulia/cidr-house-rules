@@ -34,6 +34,7 @@ provider:
     DYNAMODB_TABLE_EIP: ${self:service}-${opt:stage, self:provider.stage}-eip
     DYNAMODB_TABLE_ELB: ${self:service}-${opt:stage, self:provider.stage}-elb
     DYNAMODB_TABLE_AVAILABLE_IPS: ${self:service}-${opt:stage, self:provider.stage}-available-ips
+    ENV: ${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action: sts:AssumeRole
