@@ -199,7 +199,8 @@
       "errors":[
         {"shape":"InternalErrorException"},
         {"shape":"InvalidParameterException"},
-        {"shape":"NotFoundException"}
+        {"shape":"NotFoundException"},
+        {"shape":"DuplicateRecordException"}
       ],
       "documentation":"Update the information about a notification already created"
     },
@@ -214,7 +215,8 @@
       "errors":[
         {"shape":"InternalErrorException"},
         {"shape":"InvalidParameterException"},
-        {"shape":"NotFoundException"}
+        {"shape":"NotFoundException"},
+        {"shape":"DuplicateRecordException"}
       ],
       "documentation":"Update a subscriber"
     }
@@ -231,7 +233,6 @@
       "required":[
         "BudgetName",
         "BudgetLimit",
-        "CostTypes",
         "TimeUnit",
         "TimePeriod",
         "BudgetType"
@@ -275,7 +276,7 @@
         "ActualSpend":{"shape":"Spend"},
         "ForecastedSpend":{"shape":"Spend"}
       },
-      "documentation":"A structure holds the actual and forecasted spend for a budget."
+      "documentation":"A structure that holds the actual and forecasted spend for a budget."
     },
     "ComparisonOperator":{
       "type":"string",
@@ -290,19 +291,47 @@
       "type":"map",
       "key":{"shape":"GenericString"},
       "value":{"shape":"DimensionValues"},
-      "documentation":"A map represents the cost filters applied to the budget."
+      "documentation":"A map that represents the cost filters applied to the budget."
     },
     "CostTypes":{
       "type":"structure",
-      "required":[
-        "IncludeTax",
-        "IncludeSubscription",
-        "UseBlended"
-      ],
       "members":{
-        "IncludeTax":{"shape":"GenericBoolean"},
-        "IncludeSubscription":{"shape":"GenericBoolean"},
-        "UseBlended":{"shape":"GenericBoolean"}
+        "IncludeTax":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include tax in the cost budget."
+        },
+        "IncludeSubscription":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include subscriptions in the cost budget."
+        },
+        "UseBlended":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to use blended costs in the cost budget."
+        },
+        "IncludeRefund":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include refunds in the cost budget."
+        },
+        "IncludeCredit":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include credits in the cost budget."
+        },
+        "IncludeUpfront":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include upfront costs in the cost budget."
+        },
+        "IncludeRecurring":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include recurring costs in the cost budget."
+        },
+        "IncludeOtherSubscription":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include other subscription costs in the cost budget."
+        },
+        "IncludeSupport":{
+          "shape":"NullableBoolean",
+          "documentation":"A boolean value whether to include support costs in the cost budget."
+        }
       },
       "documentation":"This includes the options for getting the cost of a budget."
     },
@@ -540,10 +569,6 @@
       "documentation":"This exception is thrown if the paging token is expired - past its TTL",
       "exception":true
     },
-    "GenericBoolean":{
-      "type":"boolean",
-      "documentation":"A generic boolean value."
-    },
     "GenericString":{
       "type":"string",
       "documentation":"A generic String."
@@ -578,7 +603,7 @@
     },
     "MaxResults":{
       "type":"integer",
-      "documentation":"An integer to represent how many entries should a pagianted response contains. Maxium is set to 100.",
+      "documentation":"An integer to represent how many entries a paginated response contains. Maximum is set to 100.",
       "box":true,
       "max":100,
       "min":1
@@ -601,14 +626,15 @@
       "members":{
         "NotificationType":{"shape":"NotificationType"},
         "ComparisonOperator":{"shape":"ComparisonOperator"},
-        "Threshold":{"shape":"NotificationThreshold"}
+        "Threshold":{"shape":"NotificationThreshold"},
+        "ThresholdType":{"shape":"ThresholdType"}
       },
       "documentation":"Notification model. Each budget may contain multiple notifications with different settings."
     },
     "NotificationThreshold":{
       "type":"double",
-      "documentation":"The threshold of the a notification. It should be a number between 0 and 100.",
-      "max":300,
+      "documentation":"The threshold of a notification. It should be a number between 0 and 1,000,000,000.",
+      "max":1000000000,
       "min":0.1
     },
     "NotificationType":{
@@ -642,6 +668,10 @@
       "member":{"shape":"Notification"},
       "documentation":"A list of notifications."
     },
+    "NullableBoolean":{
+      "type":"boolean",
+      "box":true
+    },
     "NumericValue":{
       "type":"string",
       "documentation":"A string to represent NumericValue.",
@@ -657,7 +687,7 @@
         "Amount":{"shape":"NumericValue"},
         "Unit":{"shape":"UnitValue"}
       },
-      "documentation":"A structure represent either a cost spend or usage spend. Contains an amount and a unit."
+      "documentation":"A structure that represents either a cost spend or usage spend. Contains an amount and a unit."
     },
     "Subscriber":{
       "type":"structure",
@@ -667,9 +697,14 @@
       ],
       "members":{
         "SubscriptionType":{"shape":"SubscriptionType"},
-        "Address":{"shape":"GenericString"}
+        "Address":{"shape":"SubscriberAddress"}
       },
       "documentation":"Subscriber model. Each notification may contain multiple subscribers with different addresses."
+    },
+    "SubscriberAddress":{
+      "type":"string",
+      "documentation":"String containing email or sns topic for the subscriber address.",
+      "min":1
     },
     "Subscribers":{
       "type":"list",
@@ -686,6 +721,14 @@
         "EMAIL"
       ]
     },
+    "ThresholdType":{
+      "type":"string",
+      "documentation":"The type of threshold for a notification. It can be PERCENTAGE or ABSOLUTE_VALUE.",
+      "enum":[
+        "PERCENTAGE",
+        "ABSOLUTE_VALUE"
+      ]
+    },
     "TimePeriod":{
       "type":"structure",
       "required":[
@@ -696,7 +739,7 @@
         "Start":{"shape":"GenericTimestamp"},
         "End":{"shape":"GenericTimestamp"}
       },
-      "documentation":"A time period indicated the start date and end date of a budget."
+      "documentation":"A time period indicating the start date and end date of a budget."
     },
     "TimeUnit":{
       "type":"string",

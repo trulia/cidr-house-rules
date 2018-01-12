@@ -420,11 +420,21 @@ class StubResponseError(BotoCoreError):
 
 
 class StubAssertionError(StubResponseError, AssertionError):
-    fmt = 'Error getting response stub for operation {operation_name}: {reason}'
+    pass
 
+class UnStubbedResponseError(StubResponseError):
+    pass
 
 class InvalidConfigError(BotoCoreError):
     fmt = '{error_msg}'
+
+
+class InfiniteLoopConfigError(InvalidConfigError):
+    fmt = (
+        'Infinite loop in credential configuration detected. Attempting to '
+        'load from profile {source_profile} which has already been visited. '
+        'Visited profiles: {visited_profiles}'
+    )
 
 
 class RefreshWithMFAUnsupportedError(BotoCoreError):
