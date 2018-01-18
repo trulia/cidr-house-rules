@@ -29,6 +29,7 @@ def import_endpoint_services(event, context):
                                   aws_session_token=SESSION_TOKEN,
                                   region_name=region
                                  )
+            logger.info('Looking up endpoint details on account {} in region {}'.format(acct, region))
             endpoint_services = (
                 client.describe_vpc_endpoint_service_configurations()
             )
