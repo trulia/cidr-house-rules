@@ -32,9 +32,7 @@ def import_endpoint_services(event, context):
             logger.info(
                 'Looking up endpoint details on account {} in region {}'
                 .format(acct['id'], region))
-            endpoint_services = (
-                client.describe_vpc_endpoint_service_configurations(DryRun=True)
-            )
+            endpoint_services = client.describe_vpc_endpoint_service_configurations()
 
             for endpoint_srv in endpoint_services['ServiceConfigurations']:
                 service_id = endpoint_srv['ServiceId']
