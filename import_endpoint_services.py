@@ -15,7 +15,7 @@ def import_endpoint_services(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     endpoint_service_table = dynamodb.Table(
-        os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
+        os.environ['DYNAMODB_TABLE_ENDPOINT_SERVICES'])
     accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
     accounts = accounts_table.scan()['Items']
     endpoint_services = endpoint_service_table.scan()['Items']
