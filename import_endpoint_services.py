@@ -4,6 +4,7 @@ import boto3
 import uuid
 import sys
 sys.path.insert(0, './vendor')
+import time
 import logging
 from sts import establish_role
 from boto3.dynamodb.conditions import Key, Attr
@@ -64,7 +65,7 @@ def import_endpoint_services(event, context):
                         'ServiceState': service_state,
                         'AcceptanceRequired': acceptance_required,
                         'NetworkLoadBalancerArns': nlb_arns,
-                        'Region': region
+                        'Region': region,
                         'ttl': ttl_expire_time
                     }
                 )
