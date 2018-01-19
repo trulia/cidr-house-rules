@@ -2,6 +2,8 @@ import json
 import os
 import boto3
 import uuid
+import sys
+sys.path.insert(0, './vendor')
 import logging
 from sts import establish_role
 from boto3.dynamodb.conditions import Key, Attr
