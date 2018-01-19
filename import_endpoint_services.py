@@ -19,8 +19,10 @@ def import_endpoint_services(event, context):
     accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
     accounts = accounts_table.scan()['Items']
     endpoint_services = endpoint_service_table.scan()['Items']
-    regions = [region['RegionName']
-               for region in client.describe_regions()['Regions']]
+    #regions = [region['RegionName']
+    #           for region in client.describe_regions()['Regions']]
+    regions = ['us-west-2']
+
 
     for region in regions:
         for acct in accounts:
