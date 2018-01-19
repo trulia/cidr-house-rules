@@ -22,7 +22,8 @@ def import_endpoint_services(event, context):
     black_list_region = ['eu-west-3']
     regions = [region['RegionName']
                for region in client.describe_regions()['Regions']
-               region not in black_list_region]
+               if region not in black_list_region]
+    logger.info('Here are the regions {}'.format(regions))
 
 
     for region in regions:
