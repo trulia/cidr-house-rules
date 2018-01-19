@@ -47,6 +47,9 @@ def import_endpoint_services(event, context):
                 service_state= endpoint_srv['ServiceState']
                 acceptance_required = endpoint_srv['AcceptanceRequired']
                 nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
+                # ttl set to 48 hours
+                ttl_expire_time = int(time.time()) + 172800
+
 
                 logger.info(
                     'Recording Endpoint Service: {0} to nlbs {1} for account {2}'
@@ -62,5 +65,6 @@ def import_endpoint_services(event, context):
                         'AcceptanceRequired': acceptance_required,
                         'NetworkLoadBalancerArns': nlb_arns,
                         'Region': region
+                        'ttl': ttl_expire_time
                     }
                 )
