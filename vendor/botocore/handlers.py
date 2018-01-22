@@ -25,7 +25,7 @@ import warnings
 import uuid
 
 from botocore.compat import unquote, json, six, unquote_str, \
-    ensure_bytes, get_md5, MD5_AVAILABLE
+    ensure_bytes, get_md5, MD5_AVAILABLE, OrderedDict
 from botocore.docs.utils import AutoPopulatedParam
 from botocore.docs.utils import HideParamFromOperations
 from botocore.docs.utils import AppendParamDocumentation
@@ -56,6 +56,14 @@ REGISTER_LAST = object()
 # (.), hyphens (-), and underscores (_).
 VALID_BUCKET = re.compile(r'^[a-zA-Z0-9.\-_]{1,255}$')
 VERSION_ID_SUFFIX = re.compile(r'\?versionId=[^\s]+$')
+
+SERVICE_NAME_ALIASES = {
+    'runtime.sagemaker': 'sagemaker-runtime'
+}
+
+
+def handle_service_name_alias(service_name, **kwargs):
+    return SERVICE_NAME_ALIASES.get(service_name, service_name)
 
 
 def check_for_200_error(response, **kwargs):
@@ -163,7 +171,8 @@ def decode_quoted_jsondoc(value):
 def json_decode_template_body(parsed, **kwargs):
     if 'TemplateBody' in parsed:
         try:
-            value = json.loads(parsed['TemplateBody'])
+            value = json.loads(
+                parsed['TemplateBody'], object_pairs_hook=OrderedDict)
             parsed['TemplateBody'] = value
         except (ValueError, TypeError):
             logger.debug('error loading JSON', exc_info=True)
@@ -840,6 +849,7 @@ class ClientMethodAlias(object):
 # automatically registered with that Session.
 
 BUILTIN_HANDLERS = [
+    ('choose-service-name', handle_service_name_alias),
     ('getattr.mturk.list_hi_ts_for_qualification_type',
      ClientMethodAlias('list_hits_for_qualification_type')),
     ('before-parameter-build.s3.UploadPart',
