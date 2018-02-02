@@ -66,6 +66,10 @@ provider:
         - "*"
 
 functions:
+  runner:
+    handler: runner.runner
+    events:
+      - schedule: rate(30 minutes)
   import_cidrs:
     handler: import_cidrs.import_cidrs
     events:
@@ -92,8 +96,6 @@ functions:
   available_ips:
     handler: available_ips.available_ips
     memorySize: 128
-    events:
-     - schedule: rate(30 minutes)
   import_endpoint_services:
     handler: import_endpoint_services.import_endpoint_services
     memorySize: 128
