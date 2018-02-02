@@ -17,45 +17,40 @@ def available_ips(event, context):
     client = boto3.client('ec2')
     available_ips_table = dynamodb.Table(
         os.environ['DYNAMODB_TABLE_AVAILABLE_IPS'])
-    accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
-    accounts = accounts_table.scan()['Items']
-    regions = ([region['RegionName']
-                for region in client.describe_regions()['Regions']])
+    account = event['account']
+    region  = event['region']
 
-    for region in regions:
-        for acct in accounts:
-            ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(acct)
-            client = boto3.client('ec2',
-                                  aws_access_key_id=ACCESS_KEY,
-                                  aws_secret_access_key=SECRET_KEY,
-                                  aws_session_token=SESSION_TOKEN,
-                                  region_name=region
-                                 )
-            subnets = client.describe_subnets()
-            if not subnets['Subnets']:
-                logger.info("No allocated subnets for acct: {0} in region {1}"
-                            .format(acct['id'], region))
-            else:
-                for subnet in subnets['Subnets']:
-                    vpc_id = subnet['VpcId']
-                    available_ips = str(subnet['AvailableIpAddressCount'])
-                    acct_id = acct['id']
-                    subnet_id = subnet['SubnetId']
-                    subnet = subnet['CidrBlock']
-                    unique_id = f'{acct_id}{vpc_id}{subnet_id}{subnet}'
-                    # ttl set to 48 hours
-                    ttl_expire_time = int(time.time()) + 172800
+    ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
+    client = boto3.client('ec2',
+                          aws_access_key_id=ACCESS_KEY,
+                          aws_secret_access_key=SECRET_KEY,
+                          aws_session_token=SESSION_TOKEN,
+                          region_name=region
+                         )
+    subnets = client.describe_subnets()
+    if not subnets['Subnets']:
+        logger.info("No allocated subnets for account: {0} in region {1}"
+                    .format(account, region))
+    else:
+        for subnet in subnets['Subnets']:
+            vpc_id = subnet['VpcId']
+            available_ips = str(subnet['AvailableIpAddressCount'])
+            subnet_id = subnet['SubnetId']
+            subnet = subnet['CidrBlock']
+            unique_id = f'{account}{vpc_id}{subnet_id}{subnet}'
+            # ttl set to 48 hours
+            ttl_expire_time = int(time.time()) + 172800
 
-                    response = available_ips_table.put_item(
-                        Item={
-                            'id': unique_id,
-                            'VpcId': vpc_id,
-                            'AccountID': acct_id,
-                            'SubnetId': subnet_id,
-                            'Subnet': subnet,
-                            'Region': region,
-                            'AvailableIpAddressCount': available_ips,
-                            'ttl': ttl_expire_time
-                        }
-                    )
-                    logger.info("Dynamodb response: {}".format(response))
+            response = available_ips_table.put_item(
+                Item={
+                    'id': unique_id,
+                    'VpcId': vpc_id,
+                    'AccountID': account,
+                    'SubnetId': subnet_id,
+                    'Subnet': subnet,
+                    'Region': region,
+                    'AvailableIpAddressCount': available_ips,
+                    'ttl': ttl_expire_time
+                }
+            )
+            logger.info("Dynamodb response: {}".format(response))

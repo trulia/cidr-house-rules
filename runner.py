@@ -10,26 +10,26 @@ from boto3.dynamodb.conditions import Key, Attr
 environment = os.environ['ENV']
 dynamodb = boto3.resource('dynamodb')
 lambda_client = boto3.client('lambda')
+function_name = os.environ['run']
 
 accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
 accounts = accounts_table.scan()['Items']
 regions = ([region['RegionName']
                 for region in client.describe_regions()['Regions']])
 
-def invoke_process(fuction_name):
-    invoke_scanner_payload = (
+def invoke_process(fuction_name, account_id, region):
+    invoke_payload = (
         json.JSONEncoder().encode(
             {
-                "account": host['AccountID'],
-                "region": host['Region']
+                "account": account_id,
+                "region": region
             }
         )
     )
     lambda_client.invoke(
         FunctionName=fuction_name
-            'cidr-house-rules-port-scan-{}-invoke_scanner'.format(environment)
         InvocationType='Event',
-        Payload=invoke_scanner_payload,
+        Payload=invoke_payload,
     )
 
 def runner(event, context):
@@ -44,6 +44,4 @@ def runner(event, context):
 Invoking cidr-house-rules-{0}-available_ips on account {1} in region {2}
 """.format(environment, acct['id'], region)
             )
-            invoke_process(
-                'cidr-house-rules-{}-available_ips'.format(environment)
-            )
+            invoke_process(function_name, acct['id'], region)

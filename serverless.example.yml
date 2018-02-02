@@ -38,6 +38,10 @@ provider:
     ENV: ${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
+        Action:
+          - lambda:InvokeFunction
+        Resource: "*"
+    - Effect: Allow
       Action: sts:AssumeRole
       Resource:
         - "arn:aws:iam::<add_remote_account_number_here>:role/role_cidr_house"
@@ -66,14 +70,24 @@ provider:
         - "*"
 
 functions:
-  runner:
+  runner-availabe_ips:
     handler: runner.runner
+    environment:
+      run: cidr-house-rules-${opt:stage, self:provider.stage}-available_ips
     events:
-      - schedule: rate(30 minutes)
+      - schedule: cron(0,30 * * * *)
+  runner-import_cidrs:
+    handler: runner.runner
+    environment:
+      run: cidr-house-rules-${opt:stage, self:provider.stage}-import_cidrs
+    events:
+      - schedule: cron(5,35 * * * *)
   import_cidrs:
     handler: import_cidrs.import_cidrs
-    events:
-     - schedule: rate(1 hour)
+    memorySize: 128
+  available_ips:
+    handler: available_ips.available_ips
+    memorySize: 128
   import_nat_gateways:
     handler: import_nat_gateways.import_nat_gateways
     events:
@@ -93,9 +107,6 @@ functions:
     memorySize: 128
     events:
      - schedule: rate(1 hour)
-  available_ips:
-    handler: available_ips.available_ips
-    memorySize: 128
   import_endpoint_services:
     handler: import_endpoint_services.import_endpoint_services
     memorySize: 128
