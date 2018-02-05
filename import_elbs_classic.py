@@ -10,7 +10,7 @@ from boto3.dynamodb.conditions import Key, Attr
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-def classic_elb_importer(classic_elbs, table, acct_id, region, ttl_expire_time):
+def classic_elb_importer(classic_elbs, table, account, region, ttl_expire_time):
     for elb in classic_elbs['LoadBalancerDescriptions']:
         elb_dns_name = elb['DNSName']
         elb_name = elb['LoadBalancerName']
@@ -21,7 +21,7 @@ def classic_elb_importer(classic_elbs, table, acct_id, region, ttl_expire_time):
             Item={
                 'id': elb_dns_name,
                 'LoadBalancerName': elb_name,
-                'AccountID': acct_id,
+                'AccountID': account,
                 'Region': region,
                 'ttl': ttl_expire_time
             }
@@ -34,27 +34,23 @@ def import_elbs(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     elb_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ELB'])
-    accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
-    accounts = accounts_table.scan()['Items']
-    regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
+    account = event['account']
+    region  = event['region']
 
-    for region in regions:
-        for acct in accounts:
-            acct_id = acct['id']
-            ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(acct)
-            classic_elb_client = boto3.client('elb',
-                                              aws_access_key_id=ACCESS_KEY,
-                                              aws_secret_access_key=SECRET_KEY,
-                                              aws_session_token=SESSION_TOKEN,
-                                              region_name=region
-                                              )
-            classic_elbs = classic_elb_client.describe_load_balancers()
-            # ttl set to 48 hours
-            ttl_expire_time = int(time.time()) + 172800
+    ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
+    classic_elb_client = boto3.client('elb',
+                                      aws_access_key_id=ACCESS_KEY,
+                                      aws_secret_access_key=SECRET_KEY,
+                                      aws_session_token=SESSION_TOKEN,
+                                      region_name=region
+                                      )
+    classic_elbs = classic_elb_client.describe_load_balancers()
+    # ttl set to 48 hours
+    ttl_expire_time = int(time.time()) + 172800
 
-            if not classic_elbs['LoadBalancerDescriptions']:
-                logger.info("No ELBs allocated for acct: {0} in region {1}"
-                            .format(acct['id'], region))
-            else:
-                classic_elb_importer(
-                    classic_elbs, elb_table, acct_id, region, ttl_expire_time)
+    if not classic_elbs['LoadBalancerDescriptions']:
+        logger.info("No ELBs allocated for account: {0} in region {1}"
+                    .format(account, region))
+    else:
+        classic_elb_importer(
+        classic_elbs, elb_table, account, region, ttl_expire_time)

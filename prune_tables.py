@@ -52,7 +52,7 @@ def prune_tables(event, context):
 
     for region in regions:
         for acct in accounts:
-            ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(acct)
+            ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(acct['id'])
             client = boto3.client('ec2',
             aws_access_key_id=ACCESS_KEY,
             aws_secret_access_key=SECRET_KEY,
