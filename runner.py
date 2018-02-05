@@ -9,6 +9,7 @@ from boto3.dynamodb.conditions import Key, Attr
 
 environment = os.environ['ENV']
 dynamodb = boto3.resource('dynamodb')
+client = boto3.client('ec2')
 lambda_client = boto3.client('lambda')
 function_name = os.environ['run']
 
