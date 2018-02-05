@@ -38,9 +38,8 @@ provider:
     ENV: ${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
-        Action:
-          - lambda:InvokeFunction
-        Resource: "*"
+      Action: lambda:InvokeFunction
+      Resource: "*"
     - Effect: Allow
       Action: sts:AssumeRole
       Resource:

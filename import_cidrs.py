@@ -10,6 +10,10 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def import_cidrs(event, context):
+    """
+    Take event data which should include AWS account and region and import
+    CIDR blocks that are in use
+    """
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     cidr_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])

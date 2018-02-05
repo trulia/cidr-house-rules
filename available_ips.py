@@ -11,8 +11,11 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def available_ips(event, context):
-    """Record AvailableIpAddressCount for all subnets in all regions
     """
+    Take in event data which should contain AWS account and region and
+    record AvailableIpAddressCount for all subnets in all regions
+    """
+
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     available_ips_table = dynamodb.Table(
