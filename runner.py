@@ -12,6 +12,8 @@ dynamodb = boto3.resource('dynamodb')
 client = boto3.client('ec2')
 lambda_client = boto3.client('lambda')
 function_name = os.environ['run']
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
 accounts = accounts_table.scan()['Items']
