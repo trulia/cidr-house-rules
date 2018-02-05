@@ -27,7 +27,7 @@ def invoke_process(fuction_name, account_id, region):
         )
     )
     lambda_client.invoke(
-        FunctionName=fuction_name
+        FunctionName=fuction_name,
         InvocationType='Event',
         Payload=invoke_payload,
     )
