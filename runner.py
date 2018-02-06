@@ -22,6 +22,8 @@ regions = ([region['RegionName']
                 for region in client.describe_regions()['Regions']])
 
 def invoke_process(fuction_name, account_id, region):
+    """Launch target fuction_name on account_id and region
+    """
     invoke_payload = (
         json.JSONEncoder().encode(
             {
@@ -44,8 +46,8 @@ def runner(event, context):
     for region in regions:
         for acct in accounts:
             logger.info(
-"""
-Invoking cidr-house-rules-{0}-available_ips on account {1} in region {2}
-""".format(environment, acct['id'], region)
+                """
+                cidr-house-rules-{0}-available_ips on account {1} in region {2}
+                """.format(environment, acct['id'], region)
             )
             invoke_process(function_name, acct['id'], region)
