@@ -10,6 +10,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def prune_tables(event, context):
+    """Remove eips, cidrs, nats that are no longer used. DEPRECIATED, we should
+    now be using Dyanmodb TTLs to expire unused resources from database
+    """
     recorded_eips = {}
     recorded_cidrs = {}
     recorded_nats = {}
