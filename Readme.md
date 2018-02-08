@@ -16,6 +16,11 @@ Centralized AWS Lambda functions assume role on monitored AWS accounts to collec
 * [ALBs, NLBs (elbv2)](https://aws.amazon.com/documentation/elastic-load-balancing/)
 * Available IPv4 Addresses per subnet (Note that the IPv4 addresses for any stopped instances are considered unavailable)
 
+##### Collection subsystem runner process
+
+The above noted cidr-house-rules collection functions are triggered by a [runner function](https://github.com/trulia/cidr-house-rules/blob/master/runner.py) which invokes the necessary number of
+import functions based upon the number of AWS accounts managed and number of regions provided by AWS. The runner process allows for cidr-house-rules to scale given any number of AWS accounts to collect information from.
+
 #### API interface
 
 An API interface is provided to expose collected data for consumption. Example usage is through Terraform's [http data source](https://www.terraform.io/docs/providers/http/data_source.html)
