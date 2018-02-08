@@ -10,6 +10,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def prune_tables(event, context):
+    """Remove eips, cidrs, nats that are no longer used. DEPRECIATED, we should
+    now be using Dyanmodb TTLs to expire unused resources from database
+    """
     recorded_eips = {}
     recorded_cidrs = {}
     recorded_nats = {}
@@ -52,7 +55,7 @@ def prune_tables(event, context):
 
     for region in regions:
         for acct in accounts:
-            ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(acct)
+            ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(acct['id'])
             client = boto3.client('ec2',
             aws_access_key_id=ACCESS_KEY,
             aws_secret_access_key=SECRET_KEY,

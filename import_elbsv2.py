@@ -10,7 +10,7 @@ from boto3.dynamodb.conditions import Key, Attr
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-def elbv2_importer(elbv2, table, acct_id, region, ttl_expire_time):
+def elbv2_importer(elbv2, table, account, region, ttl_expire_time):
     for elb in elbv2['LoadBalancers']:
         elb_dns_name = elb['DNSName']
         elb_name = "NA"
@@ -23,7 +23,7 @@ def elbv2_importer(elbv2, table, acct_id, region, ttl_expire_time):
                 'id': elb_dns_name,
                 'LoadBalancerName': elb_name,
                 'LoadBalancerArn': elb_arn,
-                'AccountID': acct_id,
+                'AccountID': account,
                 'Region': region,
                 'ttl': ttl_expire_time
             }
@@ -37,27 +37,23 @@ def import_elbs(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     elb_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ELB'])
-    accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
-    accounts = accounts_table.scan()['Items']
-    regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
+    account = event['account']
+    region  = event['region']
 
-    for region in regions:
-        for acct in accounts:
-            acct_id = acct['id']
-            ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(acct)
-            elbv2_client = boto3.client('elbv2',
-                                        aws_access_key_id=ACCESS_KEY,
-                                        aws_secret_access_key=SECRET_KEY,
-                                        aws_session_token=SESSION_TOKEN,
-                                        region_name=region
-                                        )
-            elbsv2 = elbv2_client.describe_load_balancers()
-            # ttl set to 48 hours
-            ttl_expire_time = int(time.time()) + 172800
+    ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
+    elbv2_client = boto3.client('elbv2',
+                                aws_access_key_id=ACCESS_KEY,
+                                aws_secret_access_key=SECRET_KEY,
+                                aws_session_token=SESSION_TOKEN,
+                                region_name=region
+                                )
+    elbsv2 = elbv2_client.describe_load_balancers()
+    # ttl set to 48 hours
+    ttl_expire_time = int(time.time()) + 172800
 
-            if not elbsv2['LoadBalancers']:
-                logger.info("No ELBv2s allocated for acct: {0} in region {1}"
-                            .format(acct['id'], region))
-            else:
-                elbv2_importer(
-                    elbsv2, elb_table, acct_id, region, ttl_expire_time)
+    if not elbsv2['LoadBalancers']:
+        logger.info("No ELBv2s allocated for account: {0} in region {1}"
+                    .format(account, region))
+    else:
+        elbv2_importer(
+            elbsv2, elb_table, account, region, ttl_expire_time)

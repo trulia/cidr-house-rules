@@ -3,6 +3,7 @@ import tempfile
 import os
 import sys
 import boto3
+import json
 sys.path.insert(0, './')
 import sts
 import available_ips
@@ -19,32 +20,8 @@ class TestAvailableIps(unittest.TestCase):
         """
 
         os.environ["DYNAMODB_TABLE_AVAILABLE_IPS"] = "cidr-house-rules-test-available-ips"
-        os.environ['DYNAMODB_TABLE_ACCOUNTS'] = "cidr-house-rules-test-accounts"
         self.client = boto3.client('ec2', region_name='us-east-1')
         self.dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        self.dynamodb.create_table(
-            AttributeDefinitions=[
-                {
-                    'AttributeName': 'id',
-                    'AttributeType': 'S'
-                },
-                {
-                    'AttributeName': 'team',
-                    'AttributeType': 'S'
-                },
-            ],
-            TableName='cidr-house-rules-test-accounts',
-            KeySchema=[
-                {
-                    'AttributeName': 'id',
-                    'KeyType': 'HASH'
-                }
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 1,
-                'WriteCapacityUnits': 5
-            },
-        )
         self.dynamodb.create_table(
             AttributeDefinitions=[
                 {
@@ -88,15 +65,19 @@ class TestAvailableIps(unittest.TestCase):
                 'WriteCapacityUnits': 5
             },
         )
-        self.accounts_table = self.dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
         self.available_ips_table = self.dynamodb.Table(os.environ["DYNAMODB_TABLE_AVAILABLE_IPS"])
         self.client.run_instances(ImageId='ami-03cf127a', MinCount=100, MaxCount=100)
-        self.accounts_table.put_item(
-            Item={
-                'id': '12345678919',
-                'team': 'platform'
-            })
-        available_ips.available_ips(None, None)
+        invoke_payload = (
+            json.JSONEncoder().encode(
+                {
+                    "account": 12345678919,
+                    "region": 'us-east-1'
+                }
+            )
+        )
+        invoke_payload_json = json.loads(invoke_payload)
+        print(invoke_payload)
+        available_ips.available_ips(invoke_payload_json, None)
         available_ips_table_items = self.available_ips_table.scan()['Items']
         self.assertIn('12345678919', available_ips_table_items[0]['id'])
 
