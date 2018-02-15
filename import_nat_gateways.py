@@ -26,6 +26,9 @@ def import_nat_gateways(event, context):
                           region_name=region
                          )
     nats = client.describe_nat_gateways()
+    # ttl set to 48 hours
+    ttl_expire_time = int(time.time()) + 172800
+
 
     for nat in nats['NatGateways']:
         public_ip = nat['NatGatewayAddresses'][0]['PublicIp']
@@ -42,7 +45,7 @@ def import_nat_gateways(event, context):
                 'PublicIp': public_ip,
                 'AccountID': account,
                 'VpcId': nat_vpc_id,
-                'Region': region
-            },
-            ConditionExpression='attribute_not_exists(nat_id)'
+                'Region': region,
+                'ttl': ttl_expire_time
+            }
         )

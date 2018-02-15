@@ -23,6 +23,9 @@ def import_eips(event, context):
                           region_name=region
                          )
     eips = client.describe_addresses()
+    # ttl set to 48 hours
+    ttl_expire_time = int(time.time()) + 172800
+
     if not eips['Addresses']:
         logger.info("No allocated EIPs for account: {0} in region {1}"
                     .format(account, region))
@@ -51,10 +54,10 @@ def import_eips(event, context):
                 Item={
                     'id': eip_address,
                     'AllocationId': eip_id,
-                    'AccountID': account, 
+                    'AccountID': account,
                     'AssociationId': eip_association_id,
-                    'Region': region
-                },
-                ConditionExpression='attribute_not_exists(eip_id)'
+                    'Region': region,
+                    'ttl': ttl_expire_time
+                }
             )
             logger.info("Dynamodb response: {}".format(response))

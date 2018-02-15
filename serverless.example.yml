@@ -245,6 +245,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 5
@@ -277,6 +280,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 3
           WriteCapacityUnits: 5
@@ -293,6 +299,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 3
           WriteCapacityUnits: 5
@@ -309,6 +318,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 3
           WriteCapacityUnits: 5

@@ -35,6 +35,8 @@ def import_cidrs(event, context):
         vpc_id = vpc['VpcId']
         unique_id = "{0}{1}{2}{3}".format(
             account, vpc_cidr, region, vpc_id)
+        # ttl set to 48 hours
+        ttl_expire_time = int(time.time()) + 172800
 
         logger.info(
         "Found vpc-id: {0} and cidr: {1} ({2}) from "
@@ -70,9 +72,8 @@ def import_cidrs(event, context):
                             'AccountID': account,
                             'Region': region,
                             'VpcId': vpc_id,
-                        },
-                        ConditionExpression=(
-                            'attribute_not_exists(unique_id)')
+                            'ttl': ttl_expire_time
+                        }
                     )
                     logger.info("Dynamodb response: {}".format(response))
                 else:
