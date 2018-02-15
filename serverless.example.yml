@@ -2,8 +2,21 @@ service: cidr-house-rules
 
 plugins:
   - serverless-aws-documentation
+  - serverless-plugin-aws-alerts
 
 custom:
+  alerts:
+    stages:
+      - production
+    topics:
+      alarm:
+        topic: ${self:service}-${opt:stage}-alerts-alarm
+        notifications:
+          - protocol: email
+            endpoint: name@domain.com # Change this to your email address
+    alarms:
+      - functionErrors
+      - functionThrottles
   documentation:
     info:
       version: "1"
