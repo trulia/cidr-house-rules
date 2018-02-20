@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 import logging
+import time
 from sts import establish_role
 from boto3.dynamodb.conditions import Key, Attr
 
