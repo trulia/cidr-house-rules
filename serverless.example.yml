@@ -154,11 +154,6 @@ functions:
   import_endpoint_services:
     handler: import_endpoint_services.import_endpoint_services
     memorySize: 128
-  prune_tables:
-    handler: prune_tables.prune_tables
-    memorySize: 128
-    events:
-     - schedule: rate(1 hour)
   check_conflict:
     handler: api_handlers.check_conflict
     events:
