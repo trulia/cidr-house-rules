@@ -41,13 +41,14 @@ def import_endpoint_services(event, context):
     try:
         endpoint_services = client.describe_vpc_endpoint_service_configurations()
     except client.exceptions.ClientError as e:
-        if e.response['Error']['Message'] == endpoint_service_api_not_available
+        if e.response['Error']['Message'] == endpoint_service_api_not_available:
             logger.info(
                 'VPC Endpoint Service is not available in {}').format(region)
             logger.error('Error: {}'.format(e))
             sys.exit(0)
         else:
-            logger.error('Unknown error: {}'.format(e.response['Error']['Message']))
+            logger.error('Unknown error: {}'.format(
+                e.response['Error']['Message']))
             sys.exit(1)
 
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
