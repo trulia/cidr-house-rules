@@ -45,6 +45,7 @@ def import_endpoint_services(event, context):
             logger.info(
                 'VPC Endpoint Service is not available in {}'.format(region))
             logger.error('Error: {}'.format(e))
+            # Bail out here
             return 0
         else:
             logger.error('Unknown error: {}'.format(
