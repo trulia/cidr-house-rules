@@ -13,11 +13,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Error message provided if service is not available in a region yet.
-endpoint_service_api_not_available = '''
-An error occurred (AuthFailure) when calling the
-DescribeVpcEndpointServiceConfigurations operation:
-This request has been administratively disabled.
-'''.strip()
+endpoint_service_api_not_available = """An error occurred \
+(AuthFailure) when calling the DescribeVpcEndpointServiceConfigurations \
+operation: This request has been administratively disabled."""
 
 def import_endpoint_services(event, context):
     dynamodb = boto3.resource('dynamodb')
