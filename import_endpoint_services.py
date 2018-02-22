@@ -48,7 +48,7 @@ def import_endpoint_services(event, context):
             logger.error('Error: {}'.format(e))
             sys.exit(0)
         else:
-            logger.error('Unknown error: {}'.format(e.response['Error']['Message']]))
+            logger.error('Unknown error: {}'.format(e.response['Error']['Message']))
             sys.exit(1)
 
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
