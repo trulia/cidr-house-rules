@@ -14,7 +14,7 @@ logger.setLevel(logging.INFO)
 
 # Error message provided if service is not available in a region yet.
 endpoint_service_api_not_available = (
-    "operation: This request has been administratively disabled.")
+    "This request has been administratively disabled.")
 
 def import_endpoint_services(event, context):
     dynamodb = boto3.resource('dynamodb')
