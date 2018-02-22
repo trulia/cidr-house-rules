@@ -44,7 +44,7 @@ def import_endpoint_services(event, context):
     try:
         endpoint_services = client.describe_vpc_endpoint_service_configurations()
     except ClientError as e:
-        if e.response['Error']['Code'] = endpoint_service_api_not_available
+        if e.response['Error']['Code'] == endpoint_service_api_not_available:
             logger.info(
                 'VPC Endpoint Service is not available in {}').format(region)
             logger.error('Error: {}'.format(e))
