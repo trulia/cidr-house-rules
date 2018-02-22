@@ -12,6 +12,13 @@ from boto3.dynamodb.conditions import Key, Attr
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Error message provided if service is not available in a region yet.
+endpoint_service_api_not_available = '''
+An error occurred (AuthFailure) when calling the
+DescribeVpcEndpointServiceConfigurations operation:
+This request has been administratively disabled.
+'''.strip()
+
 def import_endpoint_services(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
@@ -31,7 +38,20 @@ def import_endpoint_services(event, context):
     logger.info(
         'Looking up endpoint details on account {} in region {}'
         .format(account, region))
-    endpoint_services = client.describe_vpc_endpoint_service_configurations()
+
+    # Some Regions don't support this service yet,
+    # capture and log these exceptions
+    try:
+        endpoint_services = client.describe_vpc_endpoint_service_configurations()
+    except ClientError as e:
+        if e.response['Error']['Code'] == endpoint_service_api_not_available
+            logger.info(
+                'VPC Endpoint Service is not available in {}').format(region)
+            logger.error('Error: {}'.format(e))
+            sys.exit(0)
+        else:
+            logger.error('Unknown error: {}'.format(e))
+            sys.exit(1)
 
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
         service_id = endpoint_srv['ServiceId']
