@@ -14,6 +14,9 @@ custom:
         notifications:
           - protocol: email
             endpoint: name@domain.com # Change this to your email address
+    definitions:
+      functionErrors:
+        threshold: 5
     alarms:
       - functionErrors
       - functionThrottles
