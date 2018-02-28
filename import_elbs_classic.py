@@ -36,6 +36,10 @@ def import_elbs(event, context):
     elb_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ELB'])
     account = event['account']
     region  = event['region']
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
 
     ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
     classic_elb_client = boto3.client('elb',
@@ -45,8 +49,6 @@ def import_elbs(event, context):
                                       region_name=region
                                       )
     classic_elbs = classic_elb_client.describe_load_balancers()
-    # ttl set to 48 hours
-    ttl_expire_time = int(time.time()) + 172800
 
     if not classic_elbs['LoadBalancerDescriptions']:
         logger.info("No ELBs allocated for account: {0} in region {1}"

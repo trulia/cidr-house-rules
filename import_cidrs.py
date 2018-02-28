@@ -21,6 +21,10 @@ def import_cidrs(event, context):
     cidrs = cidr_table.scan()['Items']
     account = event['account']
     region  = event['region']
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
 
     ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
     client = boto3.client('ec2',
@@ -36,8 +40,6 @@ def import_cidrs(event, context):
         vpc_id = vpc['VpcId']
         unique_id = "{0}{1}{2}{3}".format(
             account, vpc_cidr, region, vpc_id)
-        # ttl set to 48 hours
-        ttl_expire_time = int(time.time()) + 172800
 
         logger.info(
         "Found vpc-id: {0} and cidr: {1} ({2}) from "

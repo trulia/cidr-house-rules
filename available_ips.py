@@ -22,6 +22,10 @@ def available_ips(event, context):
         os.environ['DYNAMODB_TABLE_AVAILABLE_IPS'])
     account = event['account']
     region  = event['region']
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
 
     ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
     client = boto3.client('ec2',
@@ -41,8 +45,6 @@ def available_ips(event, context):
             subnet_id = subnet['SubnetId']
             subnet = subnet['CidrBlock']
             unique_id = f'{account}{vpc_id}{subnet_id}{subnet}'
-            # ttl set to 48 hours
-            ttl_expire_time = int(time.time()) + 172800
 
             response = available_ips_table.put_item(
                 Item={

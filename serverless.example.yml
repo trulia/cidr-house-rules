@@ -142,6 +142,8 @@ functions:
   available_ips:
     handler: available_ips.available_ips
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_nat_gateways:
     handler: import_nat_gateways.import_nat_gateways
     memorySize: 128
