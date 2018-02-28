@@ -2,8 +2,24 @@ service: cidr-house-rules
 
 plugins:
   - serverless-aws-documentation
+  - serverless-plugin-aws-alerts
 
 custom:
+  alerts:
+    stages:
+      - production
+    topics:
+      alarm:
+        topic: ${self:service}-${opt:stage}-alerts-alarm
+        notifications:
+          - protocol: email
+            endpoint: name@domain.com # Change this to your email address
+    definitions:
+      functionErrors:
+        threshold: 5
+    alarms:
+      - functionErrors
+      - functionThrottles
   documentation:
     info:
       version: "1"
@@ -121,31 +137,40 @@ functions:
   import_cidrs:
     handler: import_cidrs.import_cidrs
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   available_ips:
     handler: available_ips.available_ips
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_nat_gateways:
     handler: import_nat_gateways.import_nat_gateways
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_eips:
     handler: import_eips.import_eips
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_elbs_classic:
     handler: import_elbs_classic.import_elbs
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_elbsv2:
     handler: import_elbsv2.import_elbs
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
     events:
      - schedule: rate(1 hour)
   import_endpoint_services:
     handler: import_endpoint_services.import_endpoint_services
     memorySize: 128
-  prune_tables:
-    handler: prune_tables.prune_tables
-    memorySize: 128
-    events:
-     - schedule: rate(1 hour)
+    environment:
+      ttl_expire_time: 172800
   check_conflict:
     handler: api_handlers.check_conflict
     events:
@@ -245,6 +270,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 5
@@ -277,6 +305,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 3
           WriteCapacityUnits: 5
@@ -293,6 +324,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 3
           WriteCapacityUnits: 5
@@ -309,6 +343,9 @@ resources:
           -
             AttributeName: id
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: 'ttl'
         ProvisionedThroughput:
           ReadCapacityUnits: 3
           WriteCapacityUnits: 5

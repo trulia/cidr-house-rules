@@ -3,6 +3,7 @@ import os
 import boto3
 import uuid
 import logging
+import time
 from sts import establish_role
 from boto3.dynamodb.conditions import Key, Attr
 
@@ -17,6 +18,10 @@ def import_nat_gateways(event, context):
     cidrs = cidr_table.scan()['Items']
     account = event['account']
     region  = event['region']
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
 
     ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
     client = boto3.client('ec2',
@@ -42,7 +47,7 @@ def import_nat_gateways(event, context):
                 'PublicIp': public_ip,
                 'AccountID': account,
                 'VpcId': nat_vpc_id,
-                'Region': region
-            },
-            ConditionExpression='attribute_not_exists(nat_id)'
+                'Region': region,
+                'ttl': ttl_expire_time
+            }
         )

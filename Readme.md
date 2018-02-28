@@ -16,6 +16,8 @@ Centralized AWS Lambda functions assume role on monitored AWS accounts to collec
 * [ALBs, NLBs (elbv2)](https://aws.amazon.com/documentation/elastic-load-balancing/)
 * Available IPv4 Addresses per subnet (Note that the IPv4 addresses for any stopped instances are considered unavailable)
 
+Items collected into Dynamodb will expire if no longer found (default is 48 hours). TTLs are controlled via environment variables passed to each import function. TTL time is expressed in seconds. It is a calculation of current time + TTL. Each import related DynamoDB table leverages [TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html) for object expiration
+
 ##### Collection subsystem runner process
 
 The above noted cidr-house-rules collection functions are triggered by a [runner function](https://github.com/trulia/cidr-house-rules/blob/master/runner.py) which invokes the necessary number of

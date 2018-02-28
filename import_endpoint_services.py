@@ -12,11 +12,19 @@ from boto3.dynamodb.conditions import Key, Attr
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Error message provided if service is not available in a region yet.
+endpoint_service_api_not_available = (
+    "This request has been administratively disabled.")
+
 def import_endpoint_services(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     endpoint_service_table = dynamodb.Table(
         os.environ['DYNAMODB_TABLE_ENDPOINT_SERVICES'])
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
     account = event['account']
     region  = event['region']
     endpoint_services = endpoint_service_table.scan()['Items']
@@ -31,7 +39,20 @@ def import_endpoint_services(event, context):
     logger.info(
         'Looking up endpoint details on account {} in region {}'
         .format(account, region))
-    endpoint_services = client.describe_vpc_endpoint_service_configurations()
+
+    # Some Regions don't support this service yet,
+    # capture and log these exceptions
+    try:
+        endpoint_services = client.describe_vpc_endpoint_service_configurations()
+    except client.exceptions.ClientError as e:
+        if e.response['Error']['Message'] == endpoint_service_api_not_available:
+            logger.error('Error: {}'.format(e))
+            # Bail out here if AWS doesn't support Endpoint Services in region
+            return logger.info(
+                'VPC Endpoint Service is not available in {}'.format(region))
+        else:
+            logger.error('Unknown error: {}'.format(
+                e.response['Error']['Message']))
 
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
         service_id = endpoint_srv['ServiceId']
@@ -39,8 +60,6 @@ def import_endpoint_services(event, context):
         service_state= endpoint_srv['ServiceState']
         acceptance_required = endpoint_srv['AcceptanceRequired']
         nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
-        # ttl set to 48 hours
-        ttl_expire_time = int(time.time()) + 172800
 
         logger.info(
             'Recording Endpoint Service: {0} to nlbs {1} for account {2}'

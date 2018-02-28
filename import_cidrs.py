@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 sys.path.insert(0, './vendor')
 import boto3
 import logging
@@ -20,6 +21,10 @@ def import_cidrs(event, context):
     cidrs = cidr_table.scan()['Items']
     account = event['account']
     region  = event['region']
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
 
     ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
     client = boto3.client('ec2',
@@ -70,9 +75,8 @@ def import_cidrs(event, context):
                             'AccountID': account,
                             'Region': region,
                             'VpcId': vpc_id,
-                        },
-                        ConditionExpression=(
-                            'attribute_not_exists(unique_id)')
+                            'ttl': ttl_expire_time
+                        }
                     )
                     logger.info("Dynamodb response: {}".format(response))
                 else:

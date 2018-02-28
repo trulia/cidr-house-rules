@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 import logging
+import time
 from sts import establish_role
 from boto3.dynamodb.conditions import Key, Attr
 
@@ -14,6 +15,10 @@ def import_eips(event, context):
     eip_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_EIP'])
     account = event['account']
     region  = event['region']
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
 
     ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
     client = boto3.client('ec2',
@@ -23,6 +28,7 @@ def import_eips(event, context):
                           region_name=region
                          )
     eips = client.describe_addresses()
+
     if not eips['Addresses']:
         logger.info("No allocated EIPs for account: {0} in region {1}"
                     .format(account, region))
@@ -51,10 +57,10 @@ def import_eips(event, context):
                 Item={
                     'id': eip_address,
                     'AllocationId': eip_id,
-                    'AccountID': account, 
+                    'AccountID': account,
                     'AssociationId': eip_association_id,
-                    'Region': region
-                },
-                ConditionExpression='attribute_not_exists(eip_id)'
+                    'Region': region,
+                    'ttl': ttl_expire_time
+                }
             )
             logger.info("Dynamodb response: {}".format(response))
