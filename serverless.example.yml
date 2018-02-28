@@ -137,26 +137,38 @@ functions:
   import_cidrs:
     handler: import_cidrs.import_cidrs
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   available_ips:
     handler: available_ips.available_ips
     memorySize: 128
   import_nat_gateways:
     handler: import_nat_gateways.import_nat_gateways
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_eips:
     handler: import_eips.import_eips
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_elbs_classic:
     handler: import_elbs_classic.import_elbs
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   import_elbsv2:
     handler: import_elbsv2.import_elbs
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
     events:
      - schedule: rate(1 hour)
   import_endpoint_services:
     handler: import_endpoint_services.import_endpoint_services
     memorySize: 128
+    environment:
+      ttl_expire_time: 172800
   check_conflict:
     handler: api_handlers.check_conflict
     events:

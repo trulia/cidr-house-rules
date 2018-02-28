@@ -21,6 +21,10 @@ def import_endpoint_services(event, context):
     client = boto3.client('ec2')
     endpoint_service_table = dynamodb.Table(
         os.environ['DYNAMODB_TABLE_ENDPOINT_SERVICES'])
+    # ttl time to expire items in DynamoDB table, default 48 hours
+    # ttl provided in seconds
+    ttl_expire_time = (
+        int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
     account = event['account']
     region  = event['region']
     endpoint_services = endpoint_service_table.scan()['Items']
@@ -42,11 +46,10 @@ def import_endpoint_services(event, context):
         endpoint_services = client.describe_vpc_endpoint_service_configurations()
     except client.exceptions.ClientError as e:
         if e.response['Error']['Message'] == endpoint_service_api_not_available:
-            logger.info(
-                'VPC Endpoint Service is not available in {}'.format(region))
             logger.error('Error: {}'.format(e))
-            # Bail out here
-            return 0
+            # Bail out here if AWS doesn't support Endpoint Services in region
+            return logger.info(
+                'VPC Endpoint Service is not available in {}'.format(region))
         else:
             logger.error('Unknown error: {}'.format(
                 e.response['Error']['Message']))
@@ -57,8 +60,6 @@ def import_endpoint_services(event, context):
         service_state= endpoint_srv['ServiceState']
         acceptance_required = endpoint_srv['AcceptanceRequired']
         nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
-        # ttl set to 48 hours
-        ttl_expire_time = int(time.time()) + 172800
 
         logger.info(
             'Recording Endpoint Service: {0} to nlbs {1} for account {2}'

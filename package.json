@@ -1,5 +1,6 @@
 {
   "devDependencies": {
-    "serverless-aws-documentation": "^0.8.0"
+    "serverless-aws-documentation": "^0.8.0",
+    "serverless-aws-alerts": "^1.2.4"
   }
 }
