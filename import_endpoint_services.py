@@ -51,7 +51,7 @@ def import_endpoint_services(event, context):
             return logger.info(
                 'VPC Endpoint Service is not available in {}'.format(region))
         else:
-            logger.error('Unknown error: {}'.format(
+            return logger.error('Unknown error: {}'.format(
                 e.response['Error']['Message']))
 
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
