@@ -25,7 +25,7 @@ import functions based upon the number of AWS accounts managed and number of reg
 
 ###### Import functions invokation visual
 
-![import-function-invoke](https://user-images.githubusercontent.com/538171/37374673-6be10280-26d9-11e8-9e32-fa4f72c77e51.png)
+![import-function-invoke](https://user-images.githubusercontent.com/538171/37374885-71c37074-26da-11e8-9531-182c228088a9.png)
 
 #### API interface
 
