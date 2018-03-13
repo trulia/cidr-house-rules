@@ -23,6 +23,10 @@ Items collected into Dynamodb will expire if no longer found (default is 48 hour
 The above noted cidr-house-rules collection functions are triggered by a [runner function](https://github.com/trulia/cidr-house-rules/blob/master/runner.py) which invokes the necessary number of
 import functions based upon the number of AWS accounts managed and number of regions provided by AWS. The runner process allows for cidr-house-rules to scale given any number of AWS accounts to collect information from.
 
+###### Import functions invokation visual
+
+![import-function-invoke](https://user-images.githubusercontent.com/538171/37374673-6be10280-26d9-11e8-9e32-fa4f72c77e51.png)
+
 #### API interface
 
 An API interface is provided to expose collected data for consumption. Example usage is through Terraform's [http data source](https://www.terraform.io/docs/providers/http/data_source.html)
