@@ -37,7 +37,7 @@ An API interface is provided to expose collected data for consumption. Example u
 
 #### Terraform modules that use cidr-house-rules for dynamic data
 
-* todo: open source example data driven TF modules that use cidr-house-rules
+* [Dynamic NAT Gateway Security Group Terraform Module](https://github.com/trulia/cidr-house-rules-terraform-nat-gateway-sg) 
 
 #### Deployment
 
