@@ -37,7 +37,7 @@ An API interface is provided to expose collected data for consumption. Example u
 
 #### Terraform modules that use cidr-house-rules for dynamic data
 
-* [Dynamic NAT Gateway Security Group Terraform Module](https://github.com/trulia/cidr-house-rules-terraform-nat-gateway-sg) 
+* [Dynamic NAT Gateway Security Group Terraform Module](https://github.com/trulia/cidr-house-rules-terraform-nat-gateway-sg)
 
 #### Deployment
 
@@ -106,6 +106,14 @@ iamRoleStatements:
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
    https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=platform
+```
+
+##### Obtain NAT gateways for all monitored accounts
+
+```bash
+curl \
+  --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
+   https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_all
 ```
 
 ##### Check for a VPC CIDR conflict
