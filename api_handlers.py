@@ -62,7 +62,7 @@ def get_nat_gateways_for_all(event, context):
         response = []
         nat_gateways = nat_gateways_table.scan()
         for n in nat_gateways['Items']:
-            response.append(n['PublicIp']) + '/32')
+            response.append(n['PublicIp']) + '/32'))
 
         formatted_response = _ip_list_formatter(response)
 
