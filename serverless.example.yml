@@ -234,6 +234,13 @@ functions:
                 statusCode: "422"
                 responseBody:
                   description: "Invalid input"
+  get_nat_gateways_for_all:
+    handler: api_handlers.get_nat_gateways_for_all
+    events:
+      - http:
+          path: get_nat_gateways_for_all
+          method: get
+          private: true
   get_nat_gateways_for_team:
     handler: api_handlers.get_nat_gateways_for_team
     events:
