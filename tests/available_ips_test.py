@@ -1,5 +1,4 @@
 import unittest
-import tempfile
 import os
 import sys
 import boto3
@@ -76,7 +75,6 @@ class TestAvailableIps(unittest.TestCase):
             )
         )
         invoke_payload_json = json.loads(invoke_payload)
-        print(invoke_payload)
         available_ips.available_ips(invoke_payload_json, None)
         available_ips_table_items = self.available_ips_table.scan()['Items']
         self.assertIn('12345678919', available_ips_table_items[0]['id'])
