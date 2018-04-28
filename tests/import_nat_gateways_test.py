@@ -5,22 +5,21 @@ import boto3
 import json
 sys.path.insert(0, './')
 import sts
-import import_cidrs
+import import_nat_gateways
 from moto import mock_dynamodb2, mock_sts, mock_ec2
 
-class TestImportCidrs(unittest.TestCase):
+class TestImportNatGateways(unittest.TestCase):
 
     @mock_ec2
     @mock_dynamodb2
     @mock_sts
-    def test_import_cidrs(self):
-        """Setup DynamoDB tables for AccountsDynamoDbTable and ELBDynamoDbTable.
-        Provision some VPCs and some additional cidrs
+    def test_import_nat_gateways(self):
+        """Setup DynamoDB tables for NatDynamoDbTable.
+        Provision some NAT Gatways
         """
 
-        os.environ['DYNAMODB_TABLE_CIDRS'] = 'cidr-house-rules-test-cidrs'
+        os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'] = 'cidr-house-rules-test-nats'
         self.client = boto3.client('ec2', region_name='us-east-1')
-        self.ec2 = boto3.resource('ec2', region_name='us-east-1')
         self.dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         self.dynamodb.create_table(
             AttributeDefinitions=[
@@ -29,7 +28,7 @@ class TestImportCidrs(unittest.TestCase):
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'cidr',
+                    'AttributeName': 'PublicIp',
                     'AttributeType': 'S'
                 },
                 {
@@ -49,7 +48,7 @@ class TestImportCidrs(unittest.TestCase):
                     'AttributeType': 'S'
                 },
             ],
-            TableName='cidr-house-rules-test-cidrs',
+            TableName='cidr-house-rules-test-nats',
             KeySchema=[
                 {
                     'AttributeName': 'id',
@@ -61,29 +60,36 @@ class TestImportCidrs(unittest.TestCase):
                 'WriteCapacityUnits': 1
             },
         )
-        self.cidrs_table = self.dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])
+        self.nats_table = self.dynamodb.Table(
+            os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
 
-        # Provision moto mock VPCs
+        # Provision moto mock VPCs, subnets and NAT Gateways
         zones = ['us-east-1a', 'us-east-1b']
 
-        self.client.create_vpc(
-            CidrBlock='10.0.100.0/24'
-        )
-        self.client.create_vpc(
-            CidrBlock='192.168.2.0/24'
-        )
-        self.client.create_vpc(
-            CidrBlock='10.2.0.0/16'
-        )
+        for i in range(0, 5):
+            self.client.create_vpc(
+                CidrBlock='10.0.100.0/24'
+            )
+            self.client.allocate_address(
+                Domain='vpc'
+            )
 
-        # Get all VPCs
         vpcs = self.client.describe_vpcs()
+        eips = self.client.describe_addresses()
 
-        # Assign additional cidr block to vpc3
-        self.client.associate_vpc_cidr_block(
-            CidrBlock='10.5.100.0/24',
-            VpcId=vpcs['Vpcs'][3]['VpcId']
-        )
+        for i in range(0, 5):
+            self.client.create_subnet(
+                CidrBlock=f'10.{i}.100.0/24',
+                VpcId=vpcs['Vpcs'][i]['VpcId']
+            )
+
+        subnet_ids = self.client.describe_subnets()
+
+        for i in range(0, 5):
+            self.client.create_nat_gateway(
+                AllocationId=eips['Addresses'][i]['AllocationId'],
+                SubnetId=subnet_ids['Subnets'][i]['SubnetId']
+            )
 
         invoke_payload = (
             json.JSONEncoder().encode(
@@ -95,22 +101,15 @@ class TestImportCidrs(unittest.TestCase):
         )
         invoke_payload_json = json.loads(invoke_payload)
 
-        # Invoke import_cidrs lambda
-        import_cidrs.import_cidrs(invoke_payload_json, None)
-        cidrs_table_items = self.cidrs_table.scan()['Items']
+        # Invoke import_nat_gateways lambda
+        import_nat_gateways.import_nat_gateways(invoke_payload_json, None)
+        nats_table_items = self.nats_table.scan()['Items']
+        nats = self.client.describe_nat_gateways()
 
-        # Run assertions on Cidrs
-        for i in range(0, 4):
-            self.assertEqual(vpcs['Vpcs'][i]['CidrBlock'],
-                             cidrs_table_items[i]["cidr"],
-                             msg=f"""
-                             {vpcs["Vpcs"][i]["CidrBlock"]}
-                             not found in table item {i}"""
-                             )
+        # Validate that 5 EIPs were imported
+        self.assertEqual(len(nats_table_items), 5)
 
-        # Test additional associated cidr to vpc3
-        self.assertEqual('10.5.100.0/24', cidrs_table_items[4]["cidr"],
-                         msg="f'10.5.100.0/24 not found in table item 4'")
+        # todo: add more tests looking for specific EIPs in table
 
 if __name__ == '__main__':
     unittest.main()
