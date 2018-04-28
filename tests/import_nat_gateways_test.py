@@ -109,7 +109,10 @@ class TestImportNatGateways(unittest.TestCase):
         # Validate that 5 EIPs were imported
         self.assertEqual(len(nats_table_items), 5)
 
-        # todo: add more tests looking for specific EIPs in table
+        # Validate NAT Gateways found in Dynamodb table, do they match with mock
+        for nat in nats_table_items:
+            self.assertIn(nat['id'], [nat_id['NatGatewayId']
+                                      for nat_id in nats['NatGateways']])
 
 if __name__ == '__main__':
     unittest.main()
