@@ -98,10 +98,6 @@ class TestImportElbsClassic(unittest.TestCase):
         lb1 = balancers['LoadBalancerDescriptions'][1]
         lb2 = balancers['LoadBalancerDescriptions'][2]
 
-        print(f'HERE is lb0: {lb0}')
-        print(f'HERE is lb1: {lb1}')
-        print(f'HERE is lb2: {lb2}')
-
         invoke_payload = (
             json.JSONEncoder().encode(
                 {
@@ -116,7 +112,6 @@ class TestImportElbsClassic(unittest.TestCase):
         import_elbs_classic.import_elbs(invoke_payload_json, None)
         elb_table_items = self.elb_table.scan()['Items']
 
-        print(f'HERE IS ELB TABLE: {elb_table_items[0]["id"]}')
         # Run assertions on assocaited EIPs
         self.assertEqual(lb0['DNSName'], elb_table_items[0]["id"],
                          msg="f'{lb0} not found in table item 0'")
