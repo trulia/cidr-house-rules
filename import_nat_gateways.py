@@ -1,7 +1,6 @@
 import json
 import os
 import boto3
-import uuid
 import logging
 import time
 from sts import establish_role
@@ -14,8 +13,6 @@ def import_nat_gateways(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     nat_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
-    cidr_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])
-    cidrs = cidr_table.scan()['Items']
     account = event['account']
     region  = event['region']
     # ttl time to expire items in DynamoDB table, default 48 hours
