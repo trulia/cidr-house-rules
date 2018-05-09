@@ -241,6 +241,40 @@ functions:
           path: get_nat_gateways_for_all
           method: get
           private: true
+          documentation:
+            summary: "Return NAT Gateways for all teams"
+            requestBody:
+              description: "Empty body"
+            requestHeaders:
+              -
+                name: "X-Api-Key"
+                description: "Requires an active API key for accessing this function"
+            queryParams:
+              -
+                name: "results_per_page"
+                description: "provide the AWS account number, optional, used if page queyer is specified"
+              -
+                name: "page"
+                description: "provide the AWS account number, optional, default will return all results in one page"
+  get_number_of_nat_gateway_pages:
+    handler: api_handlers.get_number_of_nat_gateway_pages
+    events:
+      - http:
+          path: get_number_of_nat_gateway_pages
+          method: get
+          private: true
+          documentation:
+            summary: "Get the number of pages of NAT gateways with given number of results"
+            requestBody:
+              description: "Empty body"
+            requestHeaders:
+              -
+                name: "X-Api-Key"
+                description: "Requires an active API key for accessing this function"
+            queryParams:
+              -
+                name: "results_per_page"
+                description: "provide the AWS account number"
   get_nat_gateways_for_team:
     handler: api_handlers.get_nat_gateways_for_team
     events:
