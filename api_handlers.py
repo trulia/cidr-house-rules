@@ -58,6 +58,8 @@ def get_number_of_nat_gateway_pages(event, context):
     """Get the number of pages of NAT gateways with given number of results per
     page with ?results_per_page parameter"""
 
+    logger.info(f'DEBUG: {event}')
+
     dynamodb = boto3.resource('dynamodb')
     nat_gateways_table = dynamodb.Table(
         os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
@@ -68,7 +70,7 @@ def get_number_of_nat_gateway_pages(event, context):
         for n in nat_gateways['Items']:
             response.append(n['PublicIp'] + '/32')
 
-        if event['queryStringParameters']['results_per_page']:
+        if event['queryStringParameters']['results_per_page'] in event:
             results_per_page = (
                 event['queryStringParameters']['results_per_page'])
 
@@ -83,6 +85,8 @@ def get_nat_gateways_for_all(event, context):
     """Return NAT Gateways for all teams. Optional, pagination with ?page and
     ?results_per_page URI query parameters"""
 
+    logger.info(f'DEBUG: {event}')
+
     dynamodb = boto3.resource('dynamodb')
     nat_gateways_table = dynamodb.Table(
         os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
@@ -93,14 +97,14 @@ def get_nat_gateways_for_all(event, context):
         for n in nat_gateways['Items']:
             response.append(n['PublicIp'] + '/32')
 
-        if event['queryStringParameters']['results_per_page']:
+        if event['queryStringParameters']['results_per_page'] in event:
             results_per_page = (
                 event['queryStringParameters']['results_per_page'])
         else:
             # Default to 50 results per page if parameter not given
             results_per_page = 50
 
-        if event['queryStringParameters']['page']:
+        if event['queryStringParameters']['page'] in event:
             page = event['queryStringParameters']['page']
             paged_response = _ip_list_pagination(response, results_per_page)
             formatted_response = _ip_list_formatter(paged_response)
