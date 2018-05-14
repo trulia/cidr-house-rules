@@ -111,7 +111,8 @@ def get_nat_gateways_for_all(event, context):
         if event['queryStringParameters']:
             if event['queryStringParameters']['page']:
                 page = event['queryStringParameters']['page']
-                paged_response = _ip_list_pagination(response, results_per_page)
+                paged_response = _ip_list_pagination(
+                    response, int(results_per_page))
                 formatted_response = _ip_list_formatter(paged_response)
         else:
             formatted_response = _ip_list_formatter(response)
@@ -207,7 +208,7 @@ def _ip_list_formatter(ip_list):
 def _ip_list_pagination(ip_list, results_per_page):
     """Return paginated results for list of ips."""
     [ip_list[i:i+results_per_page]
-     for i in range(0, len(ip_list), int(results_per_page))]
+     for i in range(0, len(ip_list), results_per_page)]
 
 def _not_items_found(service, account_id):
     """Return 422 response code when items not found in DynamoDB"""
