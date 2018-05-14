@@ -6,14 +6,15 @@ import json
 sys.path.insert(0, './')
 import sts
 import import_nat_gateways
+import api_handlers
 from moto import mock_dynamodb2, mock_sts, mock_ec2
 
-class TestImportNatGateways(unittest.TestCase):
+class TestNatGateways(unittest.TestCase):
 
     @mock_ec2
     @mock_dynamodb2
     @mock_sts
-    def test_import_nat_gateways(self):
+    def test_nat_gateways(self):
         """Setup DynamoDB tables for NatDynamoDbTable.
         Provision some NAT Gatways
         """
@@ -106,6 +107,10 @@ class TestImportNatGateways(unittest.TestCase):
         nats_table_items = self.nats_table.scan()['Items']
         nats = self.client.describe_nat_gateways()
 
+        # Todo
+        # Mock API Gateway event
+        #number_of_pages = api_handlers.get_number_of_nat_gateway_pages()
+
         # Validate that 5 EIPs were imported
         self.assertEqual(len(nats_table_items), 5)
 
@@ -113,6 +118,10 @@ class TestImportNatGateways(unittest.TestCase):
         for nat in nats_table_items:
             self.assertIn(nat['id'], [nat_id['NatGatewayId']
                                       for nat_id in nats['NatGateways']])
+
+        # Todo
+        # Validate api_handler response for get_number_of_nat_gateway_pages
+        #self.assertEqual(len())
 
 if __name__ == '__main__':
     unittest.main()

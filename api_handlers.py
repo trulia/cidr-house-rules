@@ -76,6 +76,9 @@ def get_number_of_nat_gateway_pages(event, context):
 
         return pages
 
+    except ValueError:
+        _return_422('Invalid input')
+
 def get_nat_gateways_for_all(event, context):
     """Return NAT Gateways for all teams. Optional, pagination with ?page and
     ?results_per_page URI query parameters"""
