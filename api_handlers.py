@@ -70,9 +70,12 @@ def get_number_of_nat_gateway_pages(event, context):
         for n in nat_gateways['Items']:
             response.append(n['PublicIp'] + '/32')
 
-        if event['queryStringParameters']['results_per_page'] in event:
-            results_per_page = (
-                event['queryStringParameters']['results_per_page'])
+        if event['queryStringParameters']:
+            if event['queryStringParameters']['results_per_page']:
+                results_per_page = (
+                    event['queryStringParameters']['results_per_page'])
+        else:
+            results_per_page = 50
 
         pages = math.ceil(len(response) / results_per_page)
 
