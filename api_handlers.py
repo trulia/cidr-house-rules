@@ -210,8 +210,9 @@ def _ip_list_formatter(ip_list):
 
 def _ip_list_pagination(ip_list, results_per_page):
     """Return paginated results for list of ips."""
-    [ip_list[i:i+results_per_page]
+    paged_response = [ip_list[i:i+results_per_page]
      for i in range(0, len(ip_list), results_per_page)]
+    return paged_response
 
 def _not_items_found(service, account_id):
     """Return 422 response code when items not found in DynamoDB"""
