@@ -73,7 +73,7 @@ def get_number_of_nat_gateway_pages(event, context):
         if event['queryStringParameters']:
             if event['queryStringParameters']['results_per_page']:
                 results_per_page = (
-                    event['queryStringParameters']['results_per_page'])
+                    int(event['queryStringParameters']['results_per_page']))
         else:
             results_per_page = 50
 
@@ -103,17 +103,17 @@ def get_nat_gateways_for_all(event, context):
         if event['queryStringParameters']:
             if event['queryStringParameters']['results_per_page']:
                 results_per_page = (
-                    event['queryStringParameters']['results_per_page'])
+                    int(event['queryStringParameters']['results_per_page']))
         else:
             # Default to 50 results per page if parameter not given
             results_per_page = 50
 
         if event['queryStringParameters']:
             if event['queryStringParameters']['page']:
-                page = event['queryStringParameters']['page']
+                page = int(event['queryStringParameters']['page'])
                 logger.info(f'response: {response}')
                 paged_response = _ip_list_pagination(
-                    response, int(results_per_page))
+                    response, results_per_page)
                 logger.info(f'paged_response: {paged_response}')
                 # formatted_response should be the page requested
                 formatted_response = _ip_list_formatter(paged_response[0 + page])
