@@ -111,9 +111,12 @@ def get_nat_gateways_for_all(event, context):
         if event['queryStringParameters']:
             if event['queryStringParameters']['page']:
                 page = event['queryStringParameters']['page']
+                logger.info(f'response: {response}')
                 paged_response = _ip_list_pagination(
                     response, int(results_per_page))
+                logger.info(f'paged_response: {paged_response}')
                 formatted_response = _ip_list_formatter(paged_response)
+                logger.info(f'formatted_response: {formatted_response}')
         else:
             formatted_response = _ip_list_formatter(response)
 
