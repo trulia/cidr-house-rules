@@ -116,6 +116,24 @@ curl \
    https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_all
 ```
 
+##### Obtain number of result pages for NAT gatways, useful for Terraform to count out resources on
+
+```bash
+# Default is 50 results per page
+curl --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" 'https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_number_of_nat_gateway_pages'
+```
+
+```bash
+# Request number of results per page to be 10, and return total number of pages
+curl --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" 'https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_number_of_nat_gateway_pages?results_per_page=10'
+```
+
+##### Obtain paged results of Nat gateways results
+
+```bash
+curl --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" 'https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_all?results_per_page=10&page=4'
+```
+
 ##### Check for a VPC CIDR conflict
 
 ```bash
@@ -137,7 +155,7 @@ https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_elbs_for_all
 ```bash
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
-  https://yourapigateway-endpoint-generated-by-serverless.com/dev/add_account?team=my_aws_account_alias_here?account=35682931234
+  https://yourapigateway-endpoint-generated-by-serverless.com/dev/add_account?team=my_aws_account_alias_here&account=35682931234
 ```
 
 #####  Supporting Terraform

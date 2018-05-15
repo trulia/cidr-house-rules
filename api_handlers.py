@@ -3,6 +3,7 @@ import os
 import boto3
 import ipaddress
 import logging
+import math
 from boto3.dynamodb.conditions import Key, Attr
 
 logger = logging.getLogger()
@@ -53,7 +54,12 @@ def add_account(event, context):
     except ValueError:
         _return_422('Invalid input')
 
-def get_nat_gateways_for_all(event, context):
+def get_number_of_nat_gateway_pages(event, context):
+    """Get the number of pages of NAT gateways with given number of results per
+    page with ?results_per_page parameter"""
+
+    logger.info(f'DEBUG: {event}')
+
     dynamodb = boto3.resource('dynamodb')
     nat_gateways_table = dynamodb.Table(
         os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
@@ -64,7 +70,47 @@ def get_nat_gateways_for_all(event, context):
         for n in nat_gateways['Items']:
             response.append(n['PublicIp'] + '/32')
 
-        formatted_response = _ip_list_formatter(response)
+        results_per_page = _check_results_per_page(event)
+
+        logger.info(f'response: {response}')
+        pages = math.ceil(len(response) / results_per_page)
+        logger.info(f'pages: {pages}')
+
+        return _return_200(pages)
+
+    except ValueError:
+        _return_422('Invalid input')
+
+def get_nat_gateways_for_all(event, context):
+    """Return NAT Gateways for all teams. Optional, pagination with ?page and
+    ?results_per_page URI query parameters"""
+
+    logger.info(f'DEBUG: {event}')
+
+    dynamodb = boto3.resource('dynamodb')
+    nat_gateways_table = dynamodb.Table(
+        os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
+
+    try:
+        response = []
+        nat_gateways = nat_gateways_table.scan()
+        for n in nat_gateways['Items']:
+            response.append(n['PublicIp'] + '/32')
+
+        results_per_page = _check_results_per_page(event)
+
+        if event['queryStringParameters']:
+            if event['queryStringParameters']['page']:
+                page = int(event['queryStringParameters']['page'])
+                logger.info(f'response: {response}')
+                paged_response = _ip_list_pagination(
+                    response, results_per_page)
+                logger.info(f'paged_response: {paged_response}')
+                # formatted_response should be the page requested
+                formatted_response = _ip_list_formatter(paged_response[0 + page])
+                logger.info(f'formatted_response: {formatted_response}')
+        else:
+            formatted_response = _ip_list_formatter(response)
 
         if not formatted_response:
             _not_items_found("NAT Gateway", "All accounts")
@@ -154,6 +200,12 @@ def _ip_list_formatter(ip_list):
     .replace(" ",""))
     return formatted_response
 
+def _ip_list_pagination(ip_list, results_per_page):
+    """Return paginated results for list of ips."""
+    paged_response = [ip_list[i:i+results_per_page]
+     for i in range(0, len(ip_list), results_per_page)]
+    return paged_response
+
 def _not_items_found(service, account_id):
     """Return 422 response code when items not found in DynamoDB"""
     logger.info(f'No {service} for account: {account_id}')
@@ -161,6 +213,17 @@ def _not_items_found(service, account_id):
         "statusCode": 422,
         "body": f'No {service} found for account: {account_id}'
     }
+
+def _check_results_per_page(event):
+    if event['queryStringParameters']:
+        if event['queryStringParameters']['results_per_page']:
+            results_per_page = (
+                int(event['queryStringParameters']['results_per_page']))
+    else:
+        # Default to 50 results per page if parameter not given
+        results_per_page = 50
+
+    return results_per_page
 
 def _return_200(response_body):
     """Return 200 response with provided body message"""
