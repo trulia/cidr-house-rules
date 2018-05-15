@@ -77,7 +77,9 @@ def get_number_of_nat_gateway_pages(event, context):
         else:
             results_per_page = 50
 
+        logger.info(f'response: {response}')
         pages = math.ceil(len(response) / results_per_page)
+        logger.info(f'pages: {pages}')
 
         return pages
 
