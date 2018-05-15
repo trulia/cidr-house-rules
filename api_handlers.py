@@ -81,7 +81,7 @@ def get_number_of_nat_gateway_pages(event, context):
         pages = math.ceil(len(response) / results_per_page)
         logger.info(f'pages: {pages}')
 
-        return pages
+        return _return_200(pages)
 
     except ValueError:
         _return_422('Invalid input')
