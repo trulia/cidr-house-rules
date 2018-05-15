@@ -69,8 +69,10 @@ class TestNatGateways(unittest.TestCase):
 
         for i in range(0, 5):
             self.client.create_vpc(
-                CidrBlock='10.0.100.0/24'
+                CidrBlock=f'10.{i}.100.0/24'
             )
+
+        for i in range(0, 70):
             self.client.allocate_address(
                 Domain='vpc'
             )
@@ -86,10 +88,10 @@ class TestNatGateways(unittest.TestCase):
 
         subnet_ids = self.client.describe_subnets()
 
-        for i in range(0, 5):
+        for i in eips['Addresses']:
             self.client.create_nat_gateway(
-                AllocationId=eips['Addresses'][i]['AllocationId'],
-                SubnetId=subnet_ids['Subnets'][i]['SubnetId']
+                AllocationId=[i][0]['AllocationId'],
+                SubnetId=subnet_ids['Subnets'][0]['SubnetId']
             )
 
         invoke_payload = (
@@ -107,21 +109,137 @@ class TestNatGateways(unittest.TestCase):
         nats_table_items = self.nats_table.scan()['Items']
         nats = self.client.describe_nat_gateways()
 
-        # Todo
         # Mock API Gateway event
-        #number_of_pages = api_handlers.get_number_of_nat_gateway_pages()
+        api_response_get_number_of_nat_gateway_pages_default = (
+            {'body': None,
+             'headers': {'Accept': '*/*',
+                         'CloudFront-Forwarded-Proto': 'https',
+                         'CloudFront-Is-Desktop-Viewer': 'true',
+                         'CloudFront-Is-Mobile-Viewer': 'false',
+                         'CloudFront-Is-SmartTV-Viewer': 'false',
+                         'CloudFront-Is-Tablet-Viewer': 'false',
+                         'CloudFront-Viewer-Country': 'US',
+                         'Host': 'foobar.execute-api.us-west-2.amazonaws.com',
+                         'User-Agent': 'curl/7.54.0',
+                         'Via': '2.0 6895.cloudfront.net (CloudFront)',
+                         'X-Amz-Cf-Id': 'foobar===',
+                         'X-Amzn-Trace-Id': 'Root=1-5afb0foobar',
+                         'X-Forwarded-For': '127.0.0.1',
+                         'X-Forwarded-Port': '443',
+                         'X-Forwarded-Proto': 'https',
+                         'x-api-key': 'foobarapikey'
+                         },
+             'httpMethod': 'GET',
+             'isBase64Encoded': False,
+             'path': '/get_number_of_nat_gateway_pages',
+             'pathParameters': None,
+             'queryStringParameters': None,
+             'requestContext': {'accountId': '123456789',
+                                'apiId': 'foobarapi',
+                                'extendedRequestId': 'foobarreqid',
+                                'httpMethod': 'GET',
+                                'identity': {'accessKey': None,
+                                             'accountId': None,
+                                             'apiKey': 'foobarapikey',
+                                             'apiKeyId': 'foobarkeyid',
+                                             'caller': None,
+                                             'cognitoAuthenticationProvider': None,
+                                             'cognitoAuthenticationType': None,
+                                             'cognitoIdentityId': None,
+                                             'cognitoIdentityPoolId': None,
+                                             'sourceIp': '127.0.0.1',
+                                             'user': None,
+                                             'userAgent': 'curl/7.54.0',
+                                             'userArn': None},
+                                'path': '/dev/get_number_of_nat_gateway_pages',
+                                'protocol': 'HTTP/1.1',
+                                'requestId': 'foobarrequestid',
+                                'requestTime': '15/May/2018:16:31:14 +0000',
+                                'requestTimeEpoch': 1526401874029,
+                                'resourceId': 'foobarid',
+                                'resourcePath': '/get_number_of_nat_gateway_pages',
+                                'stage': 'dev'},
+             'resource': '/get_number_of_nat_gateway_pages',
+             'stageVariables': None}
+            )
+
+        api_response_get_number_of_nat_gateway_pages_10_per_page = (
+            {'body': None,
+             'headers': {'Accept': '*/*',
+                         'CloudFront-Forwarded-Proto': 'https',
+                         'CloudFront-Is-Desktop-Viewer': 'true',
+                         'CloudFront-Is-Mobile-Viewer': 'false',
+                         'CloudFront-Is-SmartTV-Viewer': 'false',
+                         'CloudFront-Is-Tablet-Viewer': 'false',
+                         'CloudFront-Viewer-Country': 'US',
+                         'Host': 'foobar.execute-api.us-west-2.amazonaws.com',
+                         'User-Agent': 'curl/7.54.0',
+                         'Via': '2.0 6895.cloudfront.net (CloudFront)',
+                         'X-Amz-Cf-Id': 'foobar===',
+                         'X-Amzn-Trace-Id': 'Root=1-5afb0foobar',
+                         'X-Forwarded-For': '127.0.0.1',
+                         'X-Forwarded-Port': '443',
+                         'X-Forwarded-Proto': 'https',
+                         'x-api-key': 'foobarapikey'
+                         },
+             'httpMethod': 'GET',
+             'isBase64Encoded': False,
+             'path': '/get_number_of_nat_gateway_pages',
+             'pathParameters': None,
+             'queryStringParameters': {'results_per_page': '10'},
+             'requestContext': {'accountId': '123456789',
+                                'apiId': 'foobarapi',
+                                'extendedRequestId': 'foobarreqid',
+                                'httpMethod': 'GET',
+                                'identity': {'accessKey': None,
+                                             'accountId': None,
+                                             'apiKey': 'foobarapikey',
+                                             'apiKeyId': 'foobarkeyid',
+                                             'caller': None,
+                                             'cognitoAuthenticationProvider': None,
+                                             'cognitoAuthenticationType': None,
+                                             'cognitoIdentityId': None,
+                                             'cognitoIdentityPoolId': None,
+                                             'sourceIp': '127.0.0.1',
+                                             'user': None,
+                                             'userAgent': 'curl/7.54.0',
+                                             'userArn': None},
+                                'path': '/dev/get_number_of_nat_gateway_pages',
+                                'protocol': 'HTTP/1.1',
+                                'requestId': 'foobarrequestid',
+                                'requestTime': '15/May/2018:16:31:14 +0000',
+                                'requestTimeEpoch': 1526401874029,
+                                'resourceId': 'foobarid',
+                                'resourcePath': '/get_number_of_nat_gateway_pages',
+                                'stage': 'dev'},
+             'resource': '/get_number_of_nat_gateway_pages',
+             'stageVariables': None}
+            )
+
+        number_of_pages = api_handlers.get_number_of_nat_gateway_pages(
+            api_response_get_number_of_nat_gateway_pages_default, None
+        )
+
+        number_of_pages_with_10_as_result = (
+            api_handlers.get_number_of_nat_gateway_pages(
+                api_response_get_number_of_nat_gateway_pages_10_per_page, None)
+            )
 
         # Validate that 5 EIPs were imported
-        self.assertEqual(len(nats_table_items), 5)
+        self.assertEqual(len(nats_table_items), 70)
 
         # Validate NAT Gateways found in Dynamodb table, do they match with mock
         for nat in nats_table_items:
             self.assertIn(nat['id'], [nat_id['NatGatewayId']
                                       for nat_id in nats['NatGateways']])
 
-        # Todo
-        # Validate api_handler response for get_number_of_nat_gateway_pages
-        #self.assertEqual(len())
+        # Validate api_handler response for get_number_of_nat_gateway_pages with
+        # default of 50 results per page
+        self.assertEqual(number_of_pages['body'], 2)
+
+        # Validate api_handler response for get_number_of_nat_gateway_pages with
+        # with requested 10 results per page
+        self.assertEqual(number_of_pages_with_10_as_result['body'], 7)
 
 if __name__ == '__main__':
     unittest.main()
