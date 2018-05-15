@@ -70,12 +70,7 @@ def get_number_of_nat_gateway_pages(event, context):
         for n in nat_gateways['Items']:
             response.append(n['PublicIp'] + '/32')
 
-        if event['queryStringParameters']:
-            if event['queryStringParameters']['results_per_page']:
-                results_per_page = (
-                    int(event['queryStringParameters']['results_per_page']))
-        else:
-            results_per_page = 50
+        results_per_page = _check_results_per_page(event)
 
         logger.info(f'response: {response}')
         pages = math.ceil(len(response) / results_per_page)
@@ -102,13 +97,7 @@ def get_nat_gateways_for_all(event, context):
         for n in nat_gateways['Items']:
             response.append(n['PublicIp'] + '/32')
 
-        if event['queryStringParameters']:
-            if event['queryStringParameters']['results_per_page']:
-                results_per_page = (
-                    int(event['queryStringParameters']['results_per_page']))
-        else:
-            # Default to 50 results per page if parameter not given
-            results_per_page = 50
+        results_per_page = _check_results_per_page(event)
 
         if event['queryStringParameters']:
             if event['queryStringParameters']['page']:
@@ -224,6 +213,17 @@ def _not_items_found(service, account_id):
         "statusCode": 422,
         "body": f'No {service} found for account: {account_id}'
     }
+
+def _check_results_per_page(event):
+    if event['queryStringParameters']:
+        if event['queryStringParameters']['results_per_page']:
+            results_per_page = (
+                int(event['queryStringParameters']['results_per_page']))
+    else:
+        # Default to 50 results per page if parameter not given
+        results_per_page = 50
+
+    return results_per_page
 
 def _return_200(response_body):
     """Return 200 response with provided body message"""
