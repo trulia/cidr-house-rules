@@ -225,7 +225,7 @@ class TestNatGateways(unittest.TestCase):
                 api_response_get_number_of_nat_gateway_pages_10_per_page, None)
             )
 
-        # Validate that 5 EIPs were imported
+        # Validate that 70 EIPs were imported
         self.assertEqual(len(nats_table_items), 70)
 
         # Validate NAT Gateways found in Dynamodb table, do they match with mock
@@ -240,6 +240,38 @@ class TestNatGateways(unittest.TestCase):
         # Validate api_handler response for get_number_of_nat_gateway_pages with
         # with requested 10 results per page
         self.assertEqual(number_of_pages_with_10_as_result['body'], 7)
+
+        # Test duplicate Nat removal need new relase of moto, 1.3.4
+        # 1. Allocate specific IP
+        # 2. Run import_nat_gateways
+        # 3. Remove specific IP
+        # 4. Reallocate sepcific IP
+        # 5. Run import_nat_gateways
+
+        # 1
+        #self.client.allocate_address(Domain="vpc", Address="100.38.43.222")
+
+        # 2
+        #import_nat_gateways.import_nat_gateways(invoke_payload_json, None)
+
+        # 3
+        #self.client.disassociate_address(
+        #    PublicIp='100.38.43.222',
+        #)
+
+        # 4
+        #self.client.allocate_address(Domain="vpc", Address="100.38.43.222")
+
+        # 5
+        #import_nat_gateways.import_nat_gateways(invoke_payload_json, None)
+        #nats_table_items = self.nats_table.scan()['Items']
+
+        # Validate that we still have 70 EIPs imported
+        #self.assertEqual(len(nats_table_items), 70)
+
+        # Validate that we only have one 100.38.43.222 in table
+        #public_ips = [nat["PublicIp"] for nat in nat_table_items]
+        #self.assertEqual(public_ip_set.count("100.38.43.222"), 1)
 
 if __name__ == '__main__':
     unittest.main()

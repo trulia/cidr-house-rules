@@ -74,4 +74,4 @@ def import_nat_gateways(event, context):
                 'Region': region,
                 'ttl': ttl_expire_time
             }
-)
+        )
