@@ -100,12 +100,12 @@ iamRoleStatements:
 
 #### Example API calls
 
-##### Obtain NAT gateways for platform team
+##### Obtain NAT gateways for platform, webteam and dataeng teams
 
 ```bash
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
-   https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=platform
+   https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?platform&webteam&dataeng
 ```
 
 ##### Obtain NAT gateways for all monitored accounts

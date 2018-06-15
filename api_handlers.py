@@ -113,43 +113,47 @@ def get_nat_gateways_for_all(event, context):
             formatted_response = _ip_list_formatter(response)
 
         if not formatted_response:
-            _not_items_found("NAT Gateway", "All accounts")
+            _no_items_found("NAT Gateway", "All accounts")
 
         return _return_200(formatted_response)
 
     except ValueError:
-        _return_422('Invalid input')
+        return _return_422('Invalid input')
 
 def get_nat_gateways_for_team(event, context):
     dynamodb = boto3.resource('dynamodb')
     accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
     nat_gateways_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
-    input_team = event['queryStringParameters']['team']
+    input_teams = event['queryStringParameters']
+    response = []
+    logger.info(f'Event: {event}')
+
+    if not input_teams:
+        return _return_422(
+            'Invalid input. Provide atleast 1 team as query parameter')
 
     try:
-        accounts = accounts_table.scan()
-        for a in accounts['Items']:
-            if a['team'] == input_team:
-                account_id = a['id']
+        for team in input_teams:
+            print(f'here is team: {team}')
+            accounts = accounts_table.scan()
+            for a in accounts['Items']:
+                if a['team'] == team:
+                    account_id = a['id']
 
-        response = []
-        nat_gateways = nat_gateways_table.scan()
-        for n in nat_gateways['Items']:
-            if n['AccountID'] == account_id:
-                response.append(n['PublicIp'] + '/32')
+            nat_gateways = nat_gateways_table.scan()
+            for n in nat_gateways['Items']:
+                if n['AccountID'] == account_id:
+                    response.append(n['PublicIp'] + '/32')
 
         formatted_response = _ip_list_formatter(response)
 
         if not formatted_response:
-            _not_items_found("NAT Gateway", account_id)
-
-        logger.info("NAT gatways: {}"
-                    .format(formatted_response))
-
+            _no_items_found("NAT Gateway", account_id)
+        logger.info(f'NAT gatways: {formatted_response}')
         return _return_200(formatted_response)
 
     except ValueError:
-        _invalid_input_return
+        return _return_422('Invalid input')
 
 def get_elbs_for_all(event, context):
     dynamodb = boto3.resource('dynamodb')
@@ -206,7 +210,7 @@ def _ip_list_pagination(ip_list, results_per_page):
      for i in range(0, len(ip_list), results_per_page)]
     return paged_response
 
-def _not_items_found(service, account_id):
+def _no_items_found(service, account_id):
     """Return 422 response code when items not found in DynamoDB"""
     logger.info(f'No {service} for account: {account_id}')
     return {
