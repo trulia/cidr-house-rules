@@ -134,7 +134,6 @@ def get_nat_gateways_for_team(event, context):
 
     try:
         for team in input_teams:
-            print(f'here is team: {team}')
             accounts = accounts_table.scan()
             for a in accounts['Items']:
                 if a['team'] == team:
