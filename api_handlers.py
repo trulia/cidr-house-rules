@@ -124,7 +124,10 @@ def get_nat_gateways_for_team(event, context):
     dynamodb = boto3.resource('dynamodb')
     accounts_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ACCOUNTS'])
     nat_gateways_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
-    input_teams = event['queryStringParameters']
+    if event['queryStringParameters']['team']:
+        input_teams = [event['queryStringParameters']['team']]
+    else:
+        input_teams = event['queryStringParameters']
     response = []
     logger.info(f'Event: {event}')
 

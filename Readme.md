@@ -106,6 +106,11 @@ iamRoleStatements:
 curl \
   --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
    https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?platform&webteam&dataeng
+
+# Or just one team
+curl \
+  --header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
+  https://yourapigateway-endpoint-generated-by-serverless.com/prod/get_nat_gateways_for_team?team=platform
 ```
 
 ##### Obtain NAT gateways for all monitored accounts
