@@ -22,3 +22,4 @@ __pycache__
 node_modules
 serverless.yml
 
+.idea
