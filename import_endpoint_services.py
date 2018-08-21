@@ -60,6 +60,7 @@ def import_endpoint_services(event, context):
         else:
             return logger.error('Unknown error: {}'.format(
                 e.response['Error']['Message']))
+
     nlb_arns = {}
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
         service_id = endpoint_srv['ServiceId']
@@ -67,7 +68,7 @@ def import_endpoint_services(event, context):
         service_state= endpoint_srv['ServiceState']
         acceptance_required = endpoint_srv['AcceptanceRequired']
         endpoint_service_nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
-        # Fetch tags of NLBs and put in nlb_arns
+        # Fetch tags of NLBs and map into a dictionary
         for nlb in endpoint_service_nlb_arns:
             nlb_tags_response = elbv2_client.describe_tags(
                 ResourceArns=[nlb])
