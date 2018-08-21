@@ -60,17 +60,19 @@ def import_endpoint_services(event, context):
         else:
             return logger.error('Unknown error: {}'.format(
                 e.response['Error']['Message']))
-
+    nlb_arns = {}
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
         service_id = endpoint_srv['ServiceId']
         service_name = endpoint_srv['ServiceName']
         service_state= endpoint_srv['ServiceState']
         acceptance_required = endpoint_srv['AcceptanceRequired']
-        nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
-        # Fetch tags of one NLB
-        nlb_tags_response = elbv2_client.describe_tags(
-            ResourceArns=[nlb_arns[0]])
-        nlb_tags = nlb_tags_response['TagDescriptions'][0]['Tags']
+        endpoint_service_nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
+        # Fetch tags of NLBs and put in nlb_arns
+        for nlb in endpoint_service_nlb_arns:
+            nlb_tags_response = elbv2_client.describe_tags(
+                ResourceArns=[nlb])
+            nlb_tags = nlb_tags_response['TagDescriptions'][0]['Tags']
+            nlb_arns.update({nlb: [nlb_tags]})
 
         logger.info(
             'Recording Endpoint Service: {0} to nlbs {1} for account {2}'
@@ -86,7 +88,7 @@ def import_endpoint_services(event, context):
                 'AcceptanceRequired': acceptance_required,
                 'NetworkLoadBalancerArns': nlb_arns,
                 'Region': region,
-                'NLBTags': nlb_tags,
+                'NLBTags': nlb_arns,
                 'ttl': ttl_expire_time
             }
         )
