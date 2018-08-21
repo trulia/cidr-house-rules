@@ -36,6 +36,13 @@ def import_endpoint_services(event, context):
                           aws_session_token=SESSION_TOKEN,
                           region_name=region
                          )
+    elbv2_client = boto3.client('elbv2',
+                                aws_access_key_id=ACCESS_KEY,
+                                aws_secret_access_key=SECRET_KEY,
+                                aws_session_token=SESSION_TOKEN,
+                                region_name=region
+                                )
+
     logger.info(
         'Looking up endpoint details on account {} in region {}'
         .format(account, region))
@@ -60,6 +67,10 @@ def import_endpoint_services(event, context):
         service_state= endpoint_srv['ServiceState']
         acceptance_required = endpoint_srv['AcceptanceRequired']
         nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
+        # Fetch tags of one NLB
+        nlb_tags_response = elbv2_client.describe_tags(
+            ResourceArns=[nlb_arns[0]])
+        nlb_tags = nlb_tags_response['TagDescriptions'][0]['Tags']
 
         logger.info(
             'Recording Endpoint Service: {0} to nlbs {1} for account {2}'
@@ -75,6 +86,7 @@ def import_endpoint_services(event, context):
                 'AcceptanceRequired': acceptance_required,
                 'NetworkLoadBalancerArns': nlb_arns,
                 'Region': region,
+                'NLBTags': nlb_tags,
                 'ttl': ttl_expire_time
             }
         )
