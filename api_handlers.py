@@ -195,6 +195,46 @@ def get_eips_for_team(event, context):
     except ValueError:
         _return_422('Invalid input')
 
+def get_service_endpoints_for_all(event, context):
+    dynamodb = boto3.resource('dynamodb')
+    endpoint_services_table = dynamodb.Table(
+        os.environ['DYNAMODB_TABLE_ENDPOINT_SERVICES'])
+
+    try:
+        response = []
+        endpoint_services = endpoint_services_table.scan()
+        for endpoint in endpoint_services['Items']:
+            response.append(endpoint['ServiceName'])
+
+        return _return_200(str(json.dumps(response)))
+
+    except ValueError:
+        _return_404('Unable to scan endpoint_services table')
+
+def get_service_endpoint_for_nlb(event, context):
+    dynamodb = boto3.resource('dynamodb')
+    endpoint_services_table = dynamodb.Table(
+        os.environ['DYNAMODB_TABLE_ENDPOINT_SERVICES'])
+    nlb_name = event['queryStringParameters']['nlb']
+
+    # Expects the NLB to be tagged with a 'Name' key
+    try:
+        response = []
+        endpoint_services = endpoint_services_table.scan()
+        for endpoint in endpoint_services['Items']:
+            for arn in e['NetworkLoadBalancerArns']:
+                nlb_tags = endpoint.get('NLBTags', None)
+                if nlb_tags:
+                    for tags in nlb_tags[arn][0]:
+                        if (tags.get('Key')) == 'Name':
+                            if tags.get('Value') == nlb_name:
+                                response.append(tags.get('Value'))
+
+        return _return_200(str(json.dumps(response)))
+
+    except ValueError:
+        _return_404(f'Unable to find NLB with Name tag {nlb_name}')
+
 def _ip_list_formatter(ip_list):
     """Create a repsponse that looks like this:
     50.112.204.31/32,50.112.53.175/32,52.34.22.83/32,52.38.146.43/32

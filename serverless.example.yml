@@ -296,6 +296,20 @@ functions:
           path: get_elbs_for_all
           method: get
           private: true
+  get_service_endpoints_for_all:
+    handler: api_handlers.get_service_endpoints_for_all
+    events:
+      - http:
+          path: get_service_endpoints_for_all
+          method: get
+          private: true
+  get_service_endpoint_for_nlb:
+    handler: api_handlers.get_service_endpoint_for_nlb
+    events:
+      - http:
+          path: get_service_endpoint_for_nlb
+          method: get
+          private: true
 
 resources:
   Resources:
