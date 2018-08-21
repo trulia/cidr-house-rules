@@ -61,8 +61,8 @@ def import_endpoint_services(event, context):
             return logger.error('Unknown error: {}'.format(
                 e.response['Error']['Message']))
 
-    nlb_arns = {}
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
+        nlb_arns = {}
         service_id = endpoint_srv['ServiceId']
         service_name = endpoint_srv['ServiceName']
         service_state= endpoint_srv['ServiceState']
