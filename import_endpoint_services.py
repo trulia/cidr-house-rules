@@ -36,6 +36,13 @@ def import_endpoint_services(event, context):
                           aws_session_token=SESSION_TOKEN,
                           region_name=region
                          )
+    elbv2_client = boto3.client('elbv2',
+                                aws_access_key_id=ACCESS_KEY,
+                                aws_secret_access_key=SECRET_KEY,
+                                aws_session_token=SESSION_TOKEN,
+                                region_name=region
+                                )
+
     logger.info(
         'Looking up endpoint details on account {} in region {}'
         .format(account, region))
@@ -54,12 +61,19 @@ def import_endpoint_services(event, context):
             return logger.error('Unknown error: {}'.format(
                 e.response['Error']['Message']))
 
+    nlb_arns = {}
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
         service_id = endpoint_srv['ServiceId']
         service_name = endpoint_srv['ServiceName']
         service_state= endpoint_srv['ServiceState']
         acceptance_required = endpoint_srv['AcceptanceRequired']
-        nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
+        endpoint_service_nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
+        # Fetch tags of NLBs and map into a dictionary
+        for nlb in endpoint_service_nlb_arns:
+            nlb_tags_response = elbv2_client.describe_tags(
+                ResourceArns=[nlb])
+            nlb_tags = nlb_tags_response['TagDescriptions'][0]['Tags']
+            nlb_arns.update({nlb: [nlb_tags]})
 
         logger.info(
             'Recording Endpoint Service: {0} to nlbs {1} for account {2}'
@@ -73,8 +87,9 @@ def import_endpoint_services(event, context):
                 'AccountID': account,
                 'ServiceState': service_state,
                 'AcceptanceRequired': acceptance_required,
-                'NetworkLoadBalancerArns': nlb_arns,
+                'NetworkLoadBalancerArns': endpoint_service_nlb_arns,
                 'Region': region,
+                'NLBTags': nlb_arns,
                 'ttl': ttl_expire_time
             }
         )
