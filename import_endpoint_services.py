@@ -87,7 +87,7 @@ def import_endpoint_services(event, context):
                 'AccountID': account,
                 'ServiceState': service_state,
                 'AcceptanceRequired': acceptance_required,
-                'NetworkLoadBalancerArns': nlb_arns,
+                'NetworkLoadBalancerArns': endpoint_service_nlb_arns,
                 'Region': region,
                 'NLBTags': nlb_arns,
                 'ttl': ttl_expire_time
