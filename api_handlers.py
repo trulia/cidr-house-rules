@@ -218,6 +218,7 @@ def get_service_endpoint_for_nlb(event, context):
     nlb_name = event['queryStringParameters']['nlb']
 
     # Expects the NLB to be tagged with a 'Name' key
+    # Find NLBs that have a "Name" tag and compare with event input nlb_name
     try:
         response = []
         endpoint_services = endpoint_services_table.scan()
