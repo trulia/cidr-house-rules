@@ -229,7 +229,7 @@ def get_service_endpoint_for_nlb(event, context):
                     for tags in nlb_tags[arn][0]:
                         if (tags.get('Key')) == 'Name':
                             if tags.get('Value') == nlb_name:
-                                response.append(tags.get('Value'))
+                                response.append(endpoint['ServiceName'])
 
         return _return_200(str(json.dumps(response)))
 
