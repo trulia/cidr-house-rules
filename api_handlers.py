@@ -223,7 +223,7 @@ def get_service_endpoint_for_nlb(event, context):
         response = []
         endpoint_services = endpoint_services_table.scan()
         for endpoint in endpoint_services['Items']:
-            for arn in e['NetworkLoadBalancerArns']:
+            for arn in endpoint['NetworkLoadBalancerArns']:
                 nlb_tags = endpoint.get('NLBTags', None)
                 if nlb_tags:
                     for tags in nlb_tags[arn][0]:
