@@ -220,7 +220,7 @@ def get_service_endpoint_for_nlb(event, context):
     # Expects the NLB to be tagged with a 'Name' key
     # Find NLBs that have a "Name" tag and compare with event input nlb_name
     try:
-        response = []
+        response = ""
         endpoint_services = endpoint_services_table.scan()
         for endpoint in endpoint_services['Items']:
             for arn in endpoint['NetworkLoadBalancerArns']:
@@ -229,7 +229,7 @@ def get_service_endpoint_for_nlb(event, context):
                     for tags in nlb_tags[arn][0]:
                         if (tags.get('Key')) == 'Name':
                             if tags.get('Value') == nlb_name:
-                                response.append(endpoint['ServiceName'])
+                                response = endpoint['ServiceName']
 
         return _return_200(str(json.dumps(response)))
 
