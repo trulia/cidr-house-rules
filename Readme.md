@@ -155,6 +155,22 @@ curl \
 https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_elbs_for_all
 ```
 
+##### Obtain all PrivateLink endpoint services across all accounts
+
+```bash
+curl \
+--header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
+https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_service_endpoints_for_all
+```
+
+##### Obtain a specific PrivateLink endpoint service based upon the "Name" tag of an NLB associated with it. (AWS presently doesn't allow tagging of PrivateLink endpoint services, so next best option is to use tags of NLB associated with PrivateLink)
+
+```bash
+curl \
+--header "X-Api-Key: <GET_KEY_FROM_AWS_API_GATEWAY>" \
+https://yourapigateway-endpoint-generated-by-serverless.com/dev/get_service_endpoints_for_nlb?nlb=my-nlb
+```
+
 ##### Add a new account
 
 ```bash
