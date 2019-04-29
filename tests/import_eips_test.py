@@ -17,7 +17,8 @@ class TestImportEips(unittest.TestCase):
         """Setup DynamoDB tables for AccountsDynamoDbTable and EIPDynamoDbTable.
         Provision some EIPs and associate to ec2 instances
         """
-
+        
+        boto3.setup_default_session()
         os.environ['DYNAMODB_TABLE_EIP'] = 'cidr-house-rules-test-eips'
         self.client = boto3.client('ec2', region_name='us-east-1')
         self.dynamodb = boto3.resource('dynamodb', region_name='us-east-1')

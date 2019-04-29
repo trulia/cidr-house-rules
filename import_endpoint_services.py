@@ -7,6 +7,7 @@ sys.path.insert(0, './vendor')
 import time
 import logging
 from sts import establish_role
+from ttl_manager import ttl_manager
 from boto3.dynamodb.conditions import Key, Attr
 
 logger = logging.getLogger()
@@ -18,9 +19,8 @@ endpoint_service_api_not_available = (
 
 def import_endpoint_services(event, context):
     dynamodb = boto3.resource('dynamodb')
-    client = boto3.client('ec2')
-    endpoint_service_table = dynamodb.Table(
-        os.environ['DYNAMODB_TABLE_ENDPOINT_SERVICES'])
+    endpoint_service_table_name = os.environ['DYNAMODB_TABLE_ENDPOINT_SERVICES']
+    endpoint_service_table = dynamodb.Table(endpoint_service_table_name)
     # ttl time to expire items in DynamoDB table, default 48 hours
     # ttl provided in seconds
     ttl_expire_time = (
@@ -51,6 +51,7 @@ def import_endpoint_services(event, context):
     # capture and log these exceptions
     try:
         endpoint_services = client.describe_vpc_endpoint_service_configurations()
+        ttl_manager(True, endpoint_service_table_name, 'ttl') 
     except client.exceptions.ClientError as e:
         if e.response['Error']['Message'] == endpoint_service_api_not_available:
             logger.error('Error: {}'.format(e))
@@ -58,8 +59,9 @@ def import_endpoint_services(event, context):
             return logger.info(
                 'VPC Endpoint Service is not available in {}'.format(region))
         else:
-            return logger.error('Unknown error: {}'.format(
-                e.response['Error']['Message']))
+            ttl_manager(True, endpoint_service_table_name, 'ttl') 
+            return logger.error(
+                f'Unknown error, disabling dynamodb TTL on table {endpoint_service_table_name}: {e.response["Error"]["Message"]}')
 
     for endpoint_srv in endpoint_services['ServiceConfigurations']:
         nlb_arns = {}
@@ -70,8 +72,14 @@ def import_endpoint_services(event, context):
         endpoint_service_nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
         # Fetch tags of NLBs and map into a dictionary
         for nlb in endpoint_service_nlb_arns:
-            nlb_tags_response = elbv2_client.describe_tags(
-                ResourceArns=[nlb])
+            try:
+                nlb_tags_response = elbv2_client.describe_tags(
+                    ResourceArns=[nlb])
+                # Ensure TTL is enabled on the table
+                ttl_manager(True, endpoint_service_table_name, 'ttl') 
+            except:
+                logger.error(f'Unable to run describe_tags AWS API call, disabling TTL on table')
+                ttl_manager(False, endpoint_service_table_name, 'ttl')
             nlb_tags = nlb_tags_response['TagDescriptions'][0]['Tags']
             nlb_arns.update({nlb: [nlb_tags]})
 

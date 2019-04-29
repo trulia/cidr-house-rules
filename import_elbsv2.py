@@ -5,6 +5,7 @@ import boto3
 import logging
 import time
 from sts import establish_role
+from ttl_manager import ttl_manager
 from boto3.dynamodb.conditions import Key, Attr
 
 logger = logging.getLogger()
@@ -35,8 +36,8 @@ def import_elbs(event, context):
     """Import AWS ALB, NLB resources
     """
     dynamodb = boto3.resource('dynamodb')
-    client = boto3.client('ec2')
-    elb_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ELB'])
+    elb_table_name = os.environ['DYNAMODB_TABLE_ELB']
+    elb_table = dynamodb.Table(elb_table_name)
     account = event['account']
     region  = event['region']
     # ttl time to expire items in DynamoDB table, default 48 hours
@@ -51,7 +52,14 @@ def import_elbs(event, context):
                                 aws_session_token=SESSION_TOKEN,
                                 region_name=region
                                 )
-    elbsv2 = elbv2_client.describe_load_balancers()
+
+    try:
+        elbsv2 = elbv2_client.describe_load_balancers()
+        # Ensure TTL is enabled on the table
+        ttl_manager(True, elb_table_name, 'ttl') 
+    except:
+        logger.error(f'Unable to run describe_load_balancers AWS API call, disabling TTL on table')
+        ttl_manager(False, elb_table_name, 'ttl')
 
     if not elbsv2['LoadBalancers']:
         logger.info("No ELBv2s allocated for account: {0} in region {1}"

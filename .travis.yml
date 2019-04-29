@@ -2,6 +2,9 @@ language: python
 python:
   - "3.6"
 
+before_install:
+  - export BOTO_CONFIG=/dev/null
+
 env:
   - AWS_DEFAULT_REGION=us-east-1
 

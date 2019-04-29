@@ -19,6 +19,7 @@ class TestNatGateways(unittest.TestCase):
         Provision some NAT Gatways
         """
 
+        boto3.setup_default_session()
         os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'] = 'cidr-house-rules-test-nats'
         self.client = boto3.client('ec2', region_name='us-east-1')
         self.dynamodb = boto3.resource('dynamodb', region_name='us-east-1')

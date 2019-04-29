@@ -5,6 +5,7 @@ import sys
 import time
 sys.path.insert(0, './vendor')
 from sts import establish_role
+from ttl_manager import ttl_manager
 from boto3.dynamodb.conditions import Key, Attr
 
 logger = logging.getLogger()
@@ -17,9 +18,8 @@ def available_ips(event, context):
     """
 
     dynamodb = boto3.resource('dynamodb')
-    client = boto3.client('ec2')
-    available_ips_table = dynamodb.Table(
-        os.environ['DYNAMODB_TABLE_AVAILABLE_IPS'])
+    available_ips_table_name = os.environ['DYNAMODB_TABLE_AVAILABLE_IPS']
+    available_ips_table = dynamodb.Table(available_ips_table_name)
     account = event['account']
     region  = event['region']
     # ttl time to expire items in DynamoDB table, default 48 hours
@@ -34,7 +34,14 @@ def available_ips(event, context):
                           aws_session_token=SESSION_TOKEN,
                           region_name=region
                          )
-    subnets = client.describe_subnets()
+    try:
+        subnets = client.describe_subnets()
+        # Ensure TTL is enabled on the table
+        ttl_manager(True, available_ips_table_name, 'ttl') 
+    except:
+        logger.error(f'Unable to run describe_subnets AWS API call, disabling TTL on table: {available_ips_table_name}')
+        ttl_manager(False, available_ips_table_name, 'ttl')
+
     if not subnets['Subnets']:
         logger.info("No allocated subnets for account: {0} in region {1}"
                     .format(account, region))

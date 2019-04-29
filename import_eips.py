@@ -4,6 +4,7 @@ import boto3
 import logging
 import time
 from sts import establish_role
+from ttl_manager import ttl_manager
 from boto3.dynamodb.conditions import Key, Attr
 
 logger = logging.getLogger()
@@ -11,8 +12,8 @@ logger.setLevel(logging.INFO)
 
 def import_eips(event, context):
     dynamodb = boto3.resource('dynamodb')
-    client = boto3.client('ec2')
-    eip_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_EIP'])
+    eip_table_name = os.environ['DYNAMODB_TABLE_EIP']
+    eip_table = dynamodb.Table(eip_table_name)
     account = event['account']
     region  = event['region']
     # ttl time to expire items in DynamoDB table, default 48 hours
@@ -27,7 +28,14 @@ def import_eips(event, context):
                           aws_session_token=SESSION_TOKEN,
                           region_name=region
                          )
-    eips = client.describe_addresses()
+
+    try:
+        eips = client.describe_addresses()
+        # Ensure TTL is enabled on the table
+        ttl_manager(True, eip_table_name, 'ttl') 
+    except:
+        logger.error(f'Unable to run describe_addresses AWS API call, disabling TTL on table {eip_table_name}')
+        ttl_manager(False, eip_table_name, 'ttl')
 
     if not eips['Addresses']:
         logger.info("No allocated EIPs for account: {0} in region {1}"

@@ -17,7 +17,8 @@ class TestImportCidrs(unittest.TestCase):
         """Setup DynamoDB tables for AccountsDynamoDbTable and ELBDynamoDbTable.
         Provision some VPCs and some additional cidrs
         """
-
+        
+        boto3.setup_default_session()
         os.environ['DYNAMODB_TABLE_CIDRS'] = 'cidr-house-rules-test-cidrs'
         self.client = boto3.client('ec2', region_name='us-east-1')
         self.ec2 = boto3.resource('ec2', region_name='us-east-1')

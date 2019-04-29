@@ -4,9 +4,9 @@ import sys
 import boto3
 import json
 sys.path.insert(0, './')
-import sts
 import available_ips
 from moto import mock_ec2, mock_dynamodb2, mock_sts
+import sts
 
 class TestAvailableIps(unittest.TestCase):
 
@@ -17,7 +17,8 @@ class TestAvailableIps(unittest.TestCase):
         """Setup DynamoDB tables for accounts, available-ips and turn up a
         couple mock instances to use some IPs as well
         """
-
+        
+        boto3.setup_default_session()
         os.environ["DYNAMODB_TABLE_AVAILABLE_IPS"] = "cidr-house-rules-test-available-ips"
         self.client = boto3.client('ec2', region_name='us-east-1')
         self.dynamodb = boto3.resource('dynamodb', region_name='us-east-1')

@@ -18,6 +18,7 @@ class TestImportElbsClassic(unittest.TestCase):
         Provision some ELBs classics and test import_elbs_classic
         """
 
+        boto3.setup_default_session()
         os.environ['DYNAMODB_TABLE_ELB'] = 'cidr-house-rules-test-elb'
         self.client = boto3.client('elb', region_name='us-east-1')
         self.dynamodb = boto3.resource('dynamodb', region_name='us-east-1')

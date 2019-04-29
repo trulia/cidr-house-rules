@@ -4,6 +4,7 @@ import boto3
 import logging
 import time
 from sts import establish_role
+from ttl_manager import ttl_manager
 from boto3.dynamodb.conditions import Key, Attr
 
 logger = logging.getLogger()
@@ -12,7 +13,8 @@ logger.setLevel(logging.INFO)
 def import_nat_gateways(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
-    nat_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAT_GATEWAYS'])
+    nat_table_name = os.environ['DYNAMODB_TABLE_NAT_GATEWAYS']
+    nat_table = dynamodb.Table(nat_table_name)
     account = event['account']
     region  = event['region']
     # ttl time to expire items in DynamoDB table, default 48 hours
@@ -27,7 +29,14 @@ def import_nat_gateways(event, context):
                           aws_session_token=SESSION_TOKEN,
                           region_name=region
                          )
-    nats = client.describe_nat_gateways()
+
+    try:
+        nats = client.describe_nat_gateways()
+        # Ensure TTL is enabled on the table
+        ttl_manager(True, nat_table_name, 'ttl') 
+    except:
+        logger.error(f'Unable to run describe_nat_gateways AWS API call, disabling TTL on table {nat_table_name}')
+        ttl_manager(False, nat_table_name, 'ttl')
 
     for nat in nats['NatGateways']:
         public_ip = nat['NatGatewayAddresses'][0]['PublicIp']
