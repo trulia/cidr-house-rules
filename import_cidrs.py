@@ -5,7 +5,6 @@ import boto3
 import logging
 from sts import establish_role
 from botocore.exceptions import ClientError
-# sys.path.insert(0, './vendor')
 
 
 logger = logging.getLogger()
@@ -39,8 +38,8 @@ def import_cidrs(event, context):
         vpcs = client.describe_vpcs()
     except ClientError as e:
         if e.response['Error']['Code'] == "UnauthorizedOperation":
-            logger.warning(f"Unable to access resources in {account}:{region}")
-            sys.exit(0)
+            return logger.warning(
+                f"Unable to access resources in {account}:{region}")
 
     for vpc in vpcs['Vpcs']:
         vpc_cidr = vpc['CidrBlock']
@@ -55,7 +54,7 @@ def import_cidrs(event, context):
             )
         )
 
-        response = cidr_table.put_item(
+        cidr_table.put_item(
             Item={
                 'id': unique_id,
                 'cidr': vpc_cidr,
@@ -65,7 +64,6 @@ def import_cidrs(event, context):
             },
             ConditionExpression='attribute_not_exists(unique_id)'
         )
-        logger.info("Dynamodb response: {}".format(response))
 
         if 'CidrBlockAssociationSet' in vpc:
             for cidr_associaton in vpc['CidrBlockAssociationSet']:
@@ -75,7 +73,7 @@ def import_cidrs(event, context):
                         account,
                         cidr_associaton['CidrBlock'],
                         region, vpc_id))
-                    response = cidr_table.put_item(
+                    cidr_table.put_item(
                         Item={
                             'id': unique_id,
                             'cidr': cidr_associaton['CidrBlock'],
@@ -85,7 +83,6 @@ def import_cidrs(event, context):
                             'ttl': ttl_expire_time
                         }
                     )
-                    logger.info("Dynamodb response: {}".format(response))
                 else:
                     logger.info("CIDR: {} not associated".format(
                         cidr_associaton['CidrBlock']))
