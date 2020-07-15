@@ -1,14 +1,13 @@
 import boto3
 import logging
 import os
-import sys
 import time
-sys.path.insert(0, './vendor')
 from sts import establish_role
-from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
 
 def available_ips(event, context):
     """
@@ -21,7 +20,7 @@ def available_ips(event, context):
     available_ips_table = dynamodb.Table(
         os.environ['DYNAMODB_TABLE_AVAILABLE_IPS'])
     account = event['account']
-    region  = event['region']
+    region = event['region']
     # ttl time to expire items in DynamoDB table, default 48 hours
     # ttl provided in seconds
     ttl_expire_time = (
@@ -32,9 +31,15 @@ def available_ips(event, context):
                           aws_access_key_id=ACCESS_KEY,
                           aws_secret_access_key=SECRET_KEY,
                           aws_session_token=SESSION_TOKEN,
-                          region_name=region
-                         )
-    subnets = client.describe_subnets()
+                          region_name=region)
+
+    try:
+        subnets = client.describe_subnets()
+    except ClientError as e:
+        if e.response['Error']['Code'] == "UnauthorizedOperation":
+            return logger.warning(
+                f"Unable to access resources in {account}:{region}")
+
     if not subnets['Subnets']:
         logger.info("No allocated subnets for account: {0} in region {1}"
                     .format(account, region))
@@ -46,7 +51,8 @@ def available_ips(event, context):
             subnet = subnet['CidrBlock']
             unique_id = f'{account}{vpc_id}{subnet_id}{subnet}'
 
-            response = available_ips_table.put_item(
+            logger.info(f"Found subnet {subnet_id} in vpc {vpc_id} {region}")
+            available_ips_table.put_item(
                 Item={
                     'id': unique_id,
                     'VpcId': vpc_id,
@@ -58,4 +64,3 @@ def available_ips(event, context):
                     'ttl': ttl_expire_time
                 }
             )
-            logger.info("Dynamodb response: {}".format(response))
