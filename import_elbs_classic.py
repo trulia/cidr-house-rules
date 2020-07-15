@@ -56,7 +56,7 @@ def import_elbs(event, context):
             return logger.warning(
                 f"Unable to access resources in {account}:{region}")
 
-    if not classic_elbs['LoadBalancerDescriptions']:
+    if 'LoadBalancerDescriptions' not in classic_elbs:
         logger.info("No ELBs allocated for account: {0} in region {1}"
                     .format(account, region))
     else:
