@@ -35,6 +35,7 @@ def import_elbs(event, context):
     elb_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_ELB'])
     account = event['account']
     region = event['region']
+    classic_elbs = {}
     # ttl time to expire items in DynamoDB table, default 48 hours
     # ttl provided in seconds
     ttl_expire_time = (
