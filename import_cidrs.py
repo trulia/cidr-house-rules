@@ -1,14 +1,16 @@
 import os
 import sys
 import time
-sys.path.insert(0, './vendor')
 import boto3
 import logging
 from sts import establish_role
-from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
+# sys.path.insert(0, './vendor')
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
 
 def import_cidrs(event, context):
     """
@@ -18,9 +20,9 @@ def import_cidrs(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     cidr_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])
-    cidrs = cidr_table.scan()['Items']
     account = event['account']
-    region  = event['region']
+    region = event['region']
+
     # ttl time to expire items in DynamoDB table, default 48 hours
     # ttl provided in seconds
     ttl_expire_time = (
@@ -33,7 +35,12 @@ def import_cidrs(event, context):
                           aws_session_token=SESSION_TOKEN,
                           region_name=region
                          )
-    vpcs = client.describe_vpcs()
+    try:
+        vpcs = client.describe_vpcs()
+    except ClientError as e:
+        if e.response['Error']['Code'] == "UnauthorizedOperation":
+            logger.warning(f"Unable to access resources in {account}:{region}")
+            sys.exit(0)
 
     for vpc in vpcs['Vpcs']:
         vpc_cidr = vpc['CidrBlock']
@@ -42,9 +49,9 @@ def import_cidrs(event, context):
             account, vpc_cidr, region, vpc_id)
 
         logger.info(
-        "Found vpc-id: {0} and cidr: {1} ({2}) from "
-        "account {3} in Dyanmodb".format(
-            vpc['VpcId'], vpc['CidrBlock'], region, account
+            "Found vpc-id: {0} and cidr: {1} ({2}) from "
+            "account {3} in Dyanmodb".format(
+                vpc['VpcId'], vpc['CidrBlock'], region, account
             )
         )
 
