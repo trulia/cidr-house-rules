@@ -1,20 +1,22 @@
-import json
 import os
 import boto3
 import logging
 import time
 from sts import establish_role
-from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
 
 def import_eips(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     eip_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_EIP'])
     account = event['account']
-    region  = event['region']
+    region = event['region']
+
     # ttl time to expire items in DynamoDB table, default 48 hours
     # ttl provided in seconds
     ttl_expire_time = (
@@ -25,9 +27,14 @@ def import_eips(event, context):
                           aws_access_key_id=ACCESS_KEY,
                           aws_secret_access_key=SECRET_KEY,
                           aws_session_token=SESSION_TOKEN,
-                          region_name=region
-                         )
-    eips = client.describe_addresses()
+                          region_name=region)
+
+    try:
+        eips = client.describe_addresses()
+    except ClientError as e:
+        if e.response['Error']['Code'] == "UnauthorizedOperation":
+            return logger.warning(
+                f"Unable to access resources in {account}:{region}")
 
     if not eips['Addresses']:
         logger.info("No allocated EIPs for account: {0} in region {1}"
@@ -40,20 +47,20 @@ def import_eips(event, context):
             else:
                 logger.info(
                     "No AllocadtionId found for EIP {0} in account {1} {2}"
-                            .format(eip_address, account, region))
+                    .format(eip_address, account, region))
                 eip_association_id = "none"
             if 'AllocationId' in eip:
                 eip_id = eip['AllocationId']
             else:
                 logger.info(
                     "No AllocadtionId found for EIP {0} in account {1} {2}"
-                            .format(eip_address, account, region))
+                    .format(eip_address, account, region))
                 eip_id = "none"
 
             logger.info('Discovered EIP in use: {0} with ID: {1}'
                         .format(eip_address, eip_id))
 
-            response = eip_table.put_item(
+            eip_table.put_item(
                 Item={
                     'id': eip_address,
                     'AllocationId': eip_id,
@@ -63,4 +70,3 @@ def import_eips(event, context):
                     'ttl': ttl_expire_time
                 }
             )
-            logger.info("Dynamodb response: {}".format(response))

@@ -1,13 +1,9 @@
-import json
 import os
 import boto3
-import uuid
-import sys
-sys.path.insert(0, './vendor')
 import time
 import logging
 from sts import establish_role
-from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -15,6 +11,7 @@ logger.setLevel(logging.INFO)
 # Error message provided if service is not available in a region yet.
 endpoint_service_api_not_available = (
     "This request has been administratively disabled.")
+
 
 def import_endpoint_services(event, context):
     dynamodb = boto3.resource('dynamodb')
@@ -26,7 +23,7 @@ def import_endpoint_services(event, context):
     ttl_expire_time = (
         int(time.time()) + os.environ.get('TTL_EXPIRE_TIME', 172800))
     account = event['account']
-    region  = event['region']
+    region = event['region']
     endpoint_services = endpoint_service_table.scan()['Items']
 
     ACCESS_KEY, SECRET_KEY, SESSION_TOKEN = establish_role(account)
@@ -51,12 +48,15 @@ def import_endpoint_services(event, context):
     # capture and log these exceptions
     try:
         endpoint_services = client.describe_vpc_endpoint_service_configurations()
-    except client.exceptions.ClientError as e:
+    except ClientError as e:
         if e.response['Error']['Message'] == endpoint_service_api_not_available:
             logger.error('Error: {}'.format(e))
             # Bail out here if AWS doesn't support Endpoint Services in region
             return logger.info(
                 'VPC Endpoint Service is not available in {}'.format(region))
+        elif e.response['Error']['Code'] == "UnauthorizedOperation":
+            return logger.warning(
+                f"Unable to access resources in {account}:{region}")
         else:
             return logger.error('Unknown error: {}'.format(
                 e.response['Error']['Message']))
@@ -65,7 +65,7 @@ def import_endpoint_services(event, context):
         nlb_arns = {}
         service_id = endpoint_srv['ServiceId']
         service_name = endpoint_srv['ServiceName']
-        service_state= endpoint_srv['ServiceState']
+        service_state = endpoint_srv['ServiceState']
         acceptance_required = endpoint_srv['AcceptanceRequired']
         endpoint_service_nlb_arns = endpoint_srv['NetworkLoadBalancerArns']
         # Fetch tags of NLBs and map into a dictionary
@@ -80,7 +80,7 @@ def import_endpoint_services(event, context):
             .format(service_name, nlb_arns, account)
         )
 
-        response = endpoint_service_table.put_item(
+        endpoint_service_table.put_item(
             Item={
                 'id': service_id,
                 'ServiceName': service_name,

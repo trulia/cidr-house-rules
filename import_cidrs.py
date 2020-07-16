@@ -1,14 +1,14 @@
 import os
-import sys
 import time
-sys.path.insert(0, './vendor')
 import boto3
 import logging
 from sts import establish_role
-from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
 
 def import_cidrs(event, context):
     """
@@ -18,9 +18,9 @@ def import_cidrs(event, context):
     dynamodb = boto3.resource('dynamodb')
     client = boto3.client('ec2')
     cidr_table = dynamodb.Table(os.environ['DYNAMODB_TABLE_CIDRS'])
-    cidrs = cidr_table.scan()['Items']
     account = event['account']
-    region  = event['region']
+    region = event['region']
+
     # ttl time to expire items in DynamoDB table, default 48 hours
     # ttl provided in seconds
     ttl_expire_time = (
@@ -33,7 +33,12 @@ def import_cidrs(event, context):
                           aws_session_token=SESSION_TOKEN,
                           region_name=region
                          )
-    vpcs = client.describe_vpcs()
+    try:
+        vpcs = client.describe_vpcs()
+    except ClientError as e:
+        if e.response['Error']['Code'] == "UnauthorizedOperation":
+            return logger.warning(
+                f"Unable to access resources in {account}:{region}")
 
     for vpc in vpcs['Vpcs']:
         vpc_cidr = vpc['CidrBlock']
@@ -42,13 +47,13 @@ def import_cidrs(event, context):
             account, vpc_cidr, region, vpc_id)
 
         logger.info(
-        "Found vpc-id: {0} and cidr: {1} ({2}) from "
-        "account {3} in Dyanmodb".format(
-            vpc['VpcId'], vpc['CidrBlock'], region, account
+            "Found vpc-id: {0} and cidr: {1} ({2}) from "
+            "account {3} in Dyanmodb".format(
+                vpc['VpcId'], vpc['CidrBlock'], region, account
             )
         )
 
-        response = cidr_table.put_item(
+        cidr_table.put_item(
             Item={
                 'id': unique_id,
                 'cidr': vpc_cidr,
@@ -58,7 +63,6 @@ def import_cidrs(event, context):
             },
             ConditionExpression='attribute_not_exists(unique_id)'
         )
-        logger.info("Dynamodb response: {}".format(response))
 
         if 'CidrBlockAssociationSet' in vpc:
             for cidr_associaton in vpc['CidrBlockAssociationSet']:
@@ -68,7 +72,7 @@ def import_cidrs(event, context):
                         account,
                         cidr_associaton['CidrBlock'],
                         region, vpc_id))
-                    response = cidr_table.put_item(
+                    cidr_table.put_item(
                         Item={
                             'id': unique_id,
                             'cidr': cidr_associaton['CidrBlock'],
@@ -78,7 +82,6 @@ def import_cidrs(event, context):
                             'ttl': ttl_expire_time
                         }
                     )
-                    logger.info("Dynamodb response: {}".format(response))
                 else:
                     logger.info("CIDR: {} not associated".format(
                         cidr_associaton['CidrBlock']))
